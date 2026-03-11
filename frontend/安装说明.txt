@@ -1,0 +1,15 @@
+@echo off
+echo ========================================
+echo   Fly Music - Node.js 安装脚本
+echo ========================================
+echo.
+echo 请先下载 Node.js LTS 版本:
+echo https://nodejs.org/dist/v20.11.0/node-v20.11.0-x64.msi
+echo.
+echo 下载完成后，运行此安装程序进行安装。
+echo.
+echo 或者您可以使用以下方法之一:
+echo 1. 使用 winget: winget install OpenJS.NodeJS.LTS
+echo 2. 使用 chocolatey: choco install nodejs-lts
+echo.
+pause
