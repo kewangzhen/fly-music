@@ -378,11 +378,11 @@ onMounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background-color: var(--dark-bg);
 }
 
 .navbar {
-  background-color: #fff;
+  background-color: var(--card-bg);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;

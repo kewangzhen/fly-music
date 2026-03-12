@@ -68,7 +68,7 @@ const editPlaylist = (playlist) => {
 <style scoped>
 .playlists-container {
   padding: 20px;
-  background-color: #f5f5f5;
+  background-color: var(--dark-bg);
   min-height: 100vh;
 }
 

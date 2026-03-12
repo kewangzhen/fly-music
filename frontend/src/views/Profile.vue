@@ -67,7 +67,7 @@ const updateProfile = () => {
 <style scoped>
 .profile-container {
   padding: 20px;
-  background-color: #f5f5f5;
+  background-color: var(--dark-bg);
   min-height: 100vh;
 }
 

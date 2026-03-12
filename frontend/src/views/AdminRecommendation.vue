@@ -352,11 +352,11 @@ onMounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: var(--dark-bg);
 }
 
 .navbar {
-  background: #fff;
+  background: var(--card-bg);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
@@ -564,11 +564,11 @@ onMounted(() => {
 }
 
 .artist-item:hover {
-  background: #f5f7fa;
+  background: var(--hover-bg);
 }
 
 .artist-item.top-three {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
 }
 
 .artist-rank {
