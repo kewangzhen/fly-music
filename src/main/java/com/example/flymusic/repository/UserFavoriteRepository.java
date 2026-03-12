@@ -45,4 +45,9 @@ public interface UserFavoriteRepository extends JpaRepository<UserFavorite, Long
      * 统计用户收藏总数
      */
     long countByUserId(Long userId);
+    
+    /**
+     * 统计歌曲被收藏次数
+     */
+    long countByTargetTypeAndTargetId(Integer targetType, Long targetId);
 }

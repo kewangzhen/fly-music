@@ -37,7 +37,7 @@
         </el-col>
         <el-col :span="6">
           <el-card class="stat-card">
-            <div class="stat-icon"><el-icon><Music /></el-icon></div>
+            <div class="stat-icon"><el-icon><Headset /></el-icon></div>
             <div class="stat-info">
               <div class="stat-value">{{ stats.totalSongs }}</div>
               <div class="stat-label">总歌曲数</div>
@@ -98,7 +98,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminAPI } from '../api'
-import { User, Music, Document, TrendCharts } from '@element-plus/icons-vue'
+import { User, Headset, Document, TrendCharts } from '@element-plus/icons-vue'
 
 const router = useRouter()
 

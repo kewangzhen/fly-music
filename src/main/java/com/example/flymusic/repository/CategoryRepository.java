@@ -32,4 +32,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
      * 根据状态查询分类
      */
     List<Category> findByStatus(Integer status);
+    
+    /**
+     * 根据名称精确查询
+     */
+    Category findByName(String name);
 }

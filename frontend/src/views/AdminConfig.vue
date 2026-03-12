@@ -131,7 +131,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { adminAPI } from '../../api'
+import { adminAPI } from '../api'
 
 const router = useRouter()
 

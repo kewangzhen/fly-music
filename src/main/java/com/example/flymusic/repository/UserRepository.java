@@ -78,4 +78,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT COUNT(u) FROM User u WHERE u.lastLoginAt >= :date")
     long countActiveUsers(@Param("date") Date date);
+    
+    /**
+     * 查询活跃用户列表（最近30天有登录）
+     */
+    @Query("SELECT u FROM User u WHERE u.lastLoginAt >= :date AND u.status = 1")
+    List<User> findActiveUsers(@Param("date") Date date);
 }

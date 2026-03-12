@@ -54,6 +54,9 @@ public class Song {
     @Column(name = "download_count", columnDefinition = "INT DEFAULT 0")
     private Integer downloadCount;
     
+    @Column(name = "share_count", columnDefinition = "INT DEFAULT 0")
+    private Integer shareCount;
+    
     @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1")
     private Integer status;
     

@@ -42,6 +42,26 @@ const routes = [
     component: () => import('../views/Recommendations.vue')
   },
   {
+    path: '/radar-playlist',
+    name: 'RadarPlaylist',
+    component: () => import('../views/RadarPlaylist.vue')
+  },
+  {
+    path: '/ranking',
+    name: 'Ranking',
+    component: () => import('../views/Ranking.vue')
+  },
+  {
+    path: '/category',
+    name: 'Category',
+    component: () => import('../views/Category.vue')
+  },
+  {
+    path: '/report',
+    name: 'Report',
+    component: () => import('../views/Report.vue')
+  },
+  {
     path: '/ai-lab',
     name: 'AiLab',
     component: () => import('../views/AiLab.vue')
@@ -70,6 +90,11 @@ const routes = [
     path: '/admin/config',
     name: 'AdminConfig',
     component: () => import('../views/AdminConfig.vue')
+  },
+  {
+    path: '/admin/recommendation',
+    name: 'AdminRecommendation',
+    component: () => import('../views/AdminRecommendation.vue')
   }
 ]
 

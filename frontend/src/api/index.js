@@ -9,6 +9,7 @@ import favoriteAPI from './favorite'
 import socialAPI from './social'
 import aiAPI from './ai'
 import adminAPI from './admin'
+import recommendationAPI from './recommendation'
 
 export {
   userAPI,
@@ -21,5 +22,6 @@ export {
   favoriteAPI,
   socialAPI,
   aiAPI,
-  adminAPI
+  adminAPI,
+  recommendationAPI
 }

@@ -39,5 +39,25 @@ export default {
   // 数据恢复
   restoreData(backupId) {
     return apiClient.post('/admin/restore', { backupId })
+  },
+
+  // 获取推荐决策看板数据
+  getRecommendationDashboard() {
+    return apiClient.get('/admin/recommendation/dashboard')
+  },
+
+  // 获取推荐权重配置
+  getRecommendationConfig() {
+    return apiClient.get('/admin/recommendation/config')
+  },
+
+  // 更新推荐权重配置
+  updateRecommendationConfig(config) {
+    return apiClient.put('/admin/recommendation/config', config)
+  },
+
+  // 重新计算推荐
+  recalculateRecommendation() {
+    return apiClient.post('/admin/recommendation/recalculate')
   }
 }

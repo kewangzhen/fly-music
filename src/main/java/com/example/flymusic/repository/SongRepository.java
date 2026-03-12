@@ -28,6 +28,12 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     List<Song> findByCategoryId(Long categoryId);
     
     /**
+     * 根据分类ID查询歌曲（按播放量排序）
+     */
+    @Query("SELECT s FROM Song s WHERE s.category.id = :categoryId AND s.status = 1 ORDER BY s.playCount DESC")
+    List<Song> findByCategoryIdOrderByPlayCountDesc(@Param("categoryId") Long categoryId, Pageable pageable);
+    
+    /**
      * 根据专辑ID查询歌曲
      */
     List<Song> findByAlbumId(Long albumId);
@@ -89,4 +95,10 @@ public interface SongRepository extends JpaRepository<Song, Long> {
      * 分页查询歌曲
      */
     Page<Song> findByStatus(Integer status, Pageable pageable);
+    
+    /**
+     * 根据分类名称查询歌曲（按播放量排序）
+     */
+    @Query("SELECT s FROM Song s WHERE s.category.name = :categoryName AND s.status = 1 ORDER BY s.playCount DESC")
+    List<Song> findByCategoryNameOrderByPlayCountDesc(@Param("categoryName") String categoryName, Pageable pageable);
 }

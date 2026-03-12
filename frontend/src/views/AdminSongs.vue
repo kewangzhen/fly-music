@@ -205,7 +205,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import { songAPI, categoryAPI } from '../../api'
+import { songAPI, categoryAPI } from '../api'
 
 const router = useRouter()
 
