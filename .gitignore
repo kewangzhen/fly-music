@@ -36,3 +36,13 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# AI Agent files
+.agent/
+.agents/
+.claude/
+.kiro/
+.qoder/
+.trae/
+skills/
+skills-lock.json
