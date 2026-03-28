@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import songApi from '../api/song'
+import apiClient from '../api/axios'
+
+const getBaseURL = () => {
+  return apiClient.defaults.baseURL || 'http://localhost:8080/api'
+}
 
 export const usePlayerStore = defineStore('player', () => {
   const currentSong = ref(null)
@@ -27,7 +32,8 @@ export const usePlayerStore = defineStore('player', () => {
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url
     }
-    return `http://localhost:8080${url}`
+    const baseURL = getBaseURL().replace('/api', '')
+    return `${baseURL}${url}`
   }
 
   const playSong = (song) => {

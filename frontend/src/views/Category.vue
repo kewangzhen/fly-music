@@ -102,11 +102,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
 import { recommendationAPI } from '../api'
 import { VideoPlay } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('3')
 const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
 const defaultCover = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100'
@@ -160,7 +162,7 @@ const playAll = () => {
 }
 
 const playSong = (song) => {
-  console.log('播放:', song)
+  playerStore.playSong(song)
 }
 
 const handleLogout = () => {

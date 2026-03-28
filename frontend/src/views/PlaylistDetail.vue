@@ -147,12 +147,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
 import { playlistAPI } from '../api'
 import { Search, VideoPlay, VideoCamera, Collection, Clock, FolderAdd, Share, Plus, Delete } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('3')
 const searchKeyword = ref('')
 const defaultCover = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400'
@@ -212,7 +214,7 @@ const playAll = () => {
 }
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
 }
 
 const addToPlaylist = (song) => {

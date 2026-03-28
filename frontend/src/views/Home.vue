@@ -277,11 +277,13 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
 import { songAPI, playlistAPI, albumAPI, artistAPI } from '../api'
 import { Search, Bell, User, Star, Clock, VideoPlay, VideoPause, VideoCamera, ArrowRight, DArrowLeft, DArrowRight, List, SwitchButton } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('1')
 const searchKeyword = ref('')
 const defaultCover = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400'
@@ -366,6 +368,7 @@ const handleSearch = () => {
 }
 
 const playSong = (song) => {
+  playerStore.playSong(song)
   currentSong.value = song
   isPlaying.value = true
 }
@@ -383,7 +386,8 @@ const viewArtist = (artist) => {
 }
 
 const togglePlay = () => {
-  isPlaying.value = !isPlaying.value
+  playerStore.togglePlay()
+  isPlaying.value = playerStore.isPlaying
 }
 
 const toggleFavorite = () => {
@@ -391,11 +395,11 @@ const toggleFavorite = () => {
 }
 
 const prevSong = () => {
-  console.log('上一首')
+  playerStore.playPrev()
 }
 
 const nextSong = () => {
-  console.log('下一首')
+  playerStore.playNext()
 }
 
 const handleLogout = () => {
