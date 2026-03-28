@@ -1,88 +1,114 @@
 import apiClient from './axios'
 
+const API_BASE_URL = '/api/songs'
+
 export default {
   // 获取所有歌曲
   getAllSongs() {
-    return apiClient.get('/songs')
+    return apiClient.get(API_BASE_URL)
   },
 
   // 根据ID获取歌曲
   getSongById(id) {
-    return apiClient.get(`/songs/${id}`)
+    return apiClient.get(`${API_BASE_URL}/${id}`)
   },
 
   // 创建歌曲
   createSong(songData) {
-    return apiClient.post('/songs', songData)
+    return apiClient.post(API_BASE_URL, songData)
   },
 
   // 更新歌曲
   updateSong(id, songData) {
-    return apiClient.put(`/songs/${id}`, songData)
+    return apiClient.put(`${API_BASE_URL}/${id}`, songData)
   },
 
   // 删除歌曲
   deleteSong(id) {
-    return apiClient.delete(`/songs/${id}`)
+    return apiClient.delete(`${API_BASE_URL}/${id}`)
   },
 
   // 根据分类ID获取歌曲
   getSongsByCategory(categoryId) {
-    return apiClient.get(`/songs/category/${categoryId}`)
+    return apiClient.get(`${API_BASE_URL}/category/${categoryId}`)
   },
 
   // 根据艺术家ID获取歌曲
   getSongsByArtist(artistId) {
-    return apiClient.get(`/songs/artist/${artistId}`)
+    return apiClient.get(`${API_BASE_URL}/artist/${artistId}`)
   },
 
   // 根据专辑ID获取歌曲
   getSongsByAlbum(albumId) {
-    return apiClient.get(`/songs/album/${albumId}`)
+    return apiClient.get(`${API_BASE_URL}/album/${albumId}`)
   },
 
   // 获取用户原创歌曲
   getOriginalSongs(userId) {
-    return apiClient.get(`/songs/user/${userId}`)
+    return apiClient.get(`${API_BASE_URL}/user/${userId}`)
   },
 
   // 搜索歌曲
   searchSongs(keyword) {
-    return apiClient.get('/songs/search', { params: { keyword } })
+    return apiClient.get(`${API_BASE_URL}/search`, { params: { keyword } })
   },
 
   // 获取热门歌曲
   getPopularSongs(limit = 10) {
-    return apiClient.get('/songs/popular', { params: { limit } })
+    return apiClient.get(`${API_BASE_URL}/popular`, { params: { limit } })
   },
 
   // 获取最新歌曲
   getLatestSongs(limit = 10) {
-    return apiClient.get('/songs/latest', { params: { limit } })
+    return apiClient.get(`${API_BASE_URL}/latest`, { params: { limit } })
   },
 
   // 获取推荐歌曲
   getRecommendedSongs(userId, limit = 10) {
-    return apiClient.get(`/songs/recommended/${userId}`, { params: { limit } })
+    return apiClient.get(`${API_BASE_URL}/recommended/${userId}`, { params: { limit } })
   },
 
   // 播放歌曲
   playSong(id) {
-    return apiClient.post(`/songs/${id}/play`)
+    return apiClient.post(`${API_BASE_URL}/${id}/play`)
   },
 
   // 审核歌曲（管理员）
   approveSong(id) {
-    return apiClient.post(`/songs/${id}/approve`)
+    return apiClient.post(`${API_BASE_URL}/${id}/approve`)
   },
 
   // 下架歌曲（管理员）
   rejectSong(id) {
-    return apiClient.post(`/songs/${id}/reject`)
+    return apiClient.post(`${API_BASE_URL}/${id}/reject`)
   },
 
   // 分页获取歌曲（管理员）
   getSongsByPage(page = 0, size = 10, status = 1) {
-    return apiClient.get('/songs/page', { params: { page, size, status } })
+    return apiClient.get(`${API_BASE_URL}/page`, { params: { page, size, status } })
+  },
+
+  // 上传歌曲文件
+  uploadSong(file, title = '') {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (title) {
+      formData.append('title', title)
+    }
+    return apiClient.post(`${API_BASE_URL}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  // 获取歌曲播放URL
+  getSongUrl(url) {
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+    }
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+    return `${baseURL}${url}`
   }
 }

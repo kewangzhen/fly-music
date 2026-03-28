@@ -155,10 +155,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
 import { Search, VideoPlay, Plus, Star } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('2')
 const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
 
@@ -229,7 +231,7 @@ const playAll = () => {
 }
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
 }
 
 const addToPlaylist = (song) => {

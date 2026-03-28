@@ -1,15 +1,25 @@
 package com.example.flymusic.controller;
 
+import com.example.flymusic.config.SongStorageService;
 import com.example.flymusic.entity.Song;
 import com.example.flymusic.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +35,12 @@ public class SongController {
 
     @Autowired
     private SongService songService;
+
+    @Autowired
+    private SongStorageService songStorageService;
+
+    @Value("${song.url.prefix:/api/songs/file/}")
+    private String songUrlPrefix;
 
     /**
      * 获取所有歌曲
@@ -193,14 +209,97 @@ public class SongController {
             @RequestParam(defaultValue = "1") Integer status) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Song> songsPage = songService.getSongsByPage(status, pageable);
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("content", songsPage.getContent());
         result.put("totalElements", songsPage.getTotalElements());
         result.put("totalPages", songsPage.getTotalPages());
         result.put("currentPage", songsPage.getNumber());
-        
+
         return ResponseEntity.ok(createSuccessResponse("获取成功", result));
+    }
+
+    /**
+     * 上传歌曲文件
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> uploadSong(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "title", required = false) String title) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(createErrorResponse("文件为空"));
+            }
+
+            String contentType = file.getContentType();
+            if (contentType == null || (!contentType.startsWith("audio/") && !contentType.equals("application/octet-stream"))) {
+                return ResponseEntity.badRequest().body(createErrorResponse("文件类型必须是音频文件"));
+            }
+
+            String url = songStorageService.storeSong(file);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("url", url);
+            result.put("filename", file.getOriginalFilename());
+            result.put("size", file.getSize());
+
+            return ResponseEntity.ok(createSuccessResponse("上传成功", result));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(createErrorResponse("上传失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 获取歌曲文件
+     */
+    @GetMapping("/file/{filename:.+}")
+    public ResponseEntity<Resource> getSongFile(@PathVariable String filename) {
+        try {
+            Path filePath = songStorageService.getSongPath(filename);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                String contentType = determineContentType(filename);
+                return ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(contentType))
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * 删除歌曲文件
+     */
+    @DeleteMapping("/file")
+    public ResponseEntity<Map<String, Object>> deleteSongFile(@RequestParam String url) {
+        try {
+            songStorageService.deleteSong(url);
+            return ResponseEntity.ok(createSuccessResponse("删除成功", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(createErrorResponse("删除失败: " + e.getMessage()));
+        }
+    }
+
+    private String determineContentType(String filename) {
+        String lowerFilename = filename.toLowerCase();
+        if (lowerFilename.endsWith(".mp3")) {
+            return "audio/mpeg";
+        } else if (lowerFilename.endsWith(".wav")) {
+            return "audio/wav";
+        } else if (lowerFilename.endsWith(".flac")) {
+            return "audio/flac";
+        } else if (lowerFilename.endsWith(".aac")) {
+            return "audio/aac";
+        } else if (lowerFilename.endsWith(".ogg")) {
+            return "audio/ogg";
+        } else if (lowerFilename.endsWith(".m4a")) {
+            return "audio/mp4";
+        }
+        return "application/octet-stream";
     }
 
     /**
