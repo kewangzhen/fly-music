@@ -2,6 +2,7 @@ package com.example.flymusic.entity;
 
 import lombok.Data;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Date;
 import java.util.Set;
 
@@ -32,10 +33,12 @@ public class Song {
     @Column(name = "cover", length = 255)
     private String cover;
     
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "album_id")
     private Album album;
     
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
@@ -72,9 +75,7 @@ public class Song {
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private Date updatedAt;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "song", cascade = CascadeType.ALL)
     private Set<PlayHistory> playHistories;
-    
-    @OneToMany(mappedBy = "song", cascade = CascadeType.ALL)
-    private Set<Comment> comments;
 }

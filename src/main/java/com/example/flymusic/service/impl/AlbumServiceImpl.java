@@ -79,7 +79,7 @@ public class AlbumServiceImpl implements AlbumService {
      */
     @Override
     public List<Album> searchAlbums(String keyword) {
-        return albumRepository.findByNameContaining(keyword);
+        return albumRepository.findByTitleContaining(keyword);
     }
 
     /**

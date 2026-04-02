@@ -2,12 +2,12 @@ package com.example.flymusic.entity;
 
 import lombok.Data;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Date;
-import java.util.Set;
 
 /**
  * 艺术家实体类
- * 包含歌手信息和作品集
+ * 包含歌手信息
  */
 @Data
 @Entity
@@ -17,13 +17,13 @@ public class Artist {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
     
-    @Column(name = "avatar", length = 255)
+    @Column(name = "avatar")
     private String avatar;
     
-    @Column(name = "cover", length = 255)
+    @Column(name = "cover")
     private String cover;
     
     @Column(name = "description", columnDefinition = "TEXT")
@@ -35,17 +35,17 @@ public class Artist {
     @Column(name = "birthdate")
     private Date birthdate;
     
-    @Column(name = "region", length = 50)
+    @Column(name = "region")
     private String region;
-    
-    @Column(name = "fan_count", columnDefinition = "INT DEFAULT 0")
-    private Integer fanCount;
     
     @Column(name = "song_count", columnDefinition = "INT DEFAULT 0")
     private Integer songCount;
     
     @Column(name = "album_count", columnDefinition = "INT DEFAULT 0")
     private Integer albumCount;
+    
+    @Column(name = "fan_count", columnDefinition = "INT DEFAULT 0")
+    private Integer fanCount;
     
     @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1")
     private Integer status;
@@ -55,7 +55,4 @@ public class Artist {
     
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private Date updatedAt;
-    
-    @ManyToMany(mappedBy = "artists")
-    private Set<Song> songs;
 }

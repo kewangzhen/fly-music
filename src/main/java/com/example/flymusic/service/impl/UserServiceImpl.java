@@ -2,6 +2,7 @@ package com.example.flymusic.service.impl;
 
 import com.example.flymusic.entity.User;
 import com.example.flymusic.repository.UserRepository;
+import com.example.flymusic.service.EmailService;
 import com.example.flymusic.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +26,9 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private EmailService emailService;
 
     /**
      * 用户注册
@@ -114,6 +118,9 @@ public class UserServiceImpl implements UserService {
         if (user.getBirthdate() != null) {
             existingUser.setBirthdate(user.getBirthdate());
         }
+        if (user.getDescription() != null) {
+            existingUser.setDescription(user.getDescription());
+        }
         if (user.getEmail() != null && !user.getEmail().equals(existingUser.getEmail())) {
             if (userRepository.existsByEmail(user.getEmail())) {
                 throw new RuntimeException("邮箱已被使用");
@@ -173,6 +180,10 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(new Date());
         userRepository.save(user);
         
+        String resetLink = "http://localhost:5173/reset-password?token=" + token;
+        String content = "您好，请点击以下链接重置密码：\n" + resetLink + "\n\n链接有效期为1小时。";
+        emailService.sendEmail(email, "Fly Music 密码重置", content);
+        
         return true;
     }
 
@@ -188,7 +199,7 @@ public class UserServiceImpl implements UserService {
         }
         
         User user = userOpt.get();
-        if (user.getResetTokenExpireAt().before(new Date())) {
+        if (user.getResetTokenExpireAt() == null || user.getResetTokenExpireAt().before(new Date())) {
             return false;
         }
         
@@ -197,6 +208,7 @@ public class UserServiceImpl implements UserService {
         user.setResetTokenExpireAt(null);
         user.setUpdatedAt(new Date());
         userRepository.save(user);
+        
         return true;
     }
 

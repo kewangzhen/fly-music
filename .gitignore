@@ -36,3 +36,21 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# AI Agent files
+.agent/
+.agents/
+.claude/
+.kiro/
+.qoder/
+.trae/
+skills/
+skills-lock.json
+
+# Music files
+songs/
+covers/
+
+# Large files (> 10MB)
+dump-*.sql
+fly_music_data_*.sql

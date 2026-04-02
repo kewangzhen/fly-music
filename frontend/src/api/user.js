@@ -39,6 +39,16 @@ export default {
     return apiClient.post('/users/reset-password', { email })
   },
 
+  // 通过令牌更新密码
+  updatePasswordByToken(token, newPassword) {
+    return apiClient.post('/users/update-password', { token, newPassword })
+  },
+
+  // 验证重置令牌
+  verifyToken(token) {
+    return apiClient.get('/users/verify-token', { params: { token } })
+  },
+
   // 获取所有用户（管理员）
   getAllUsers() {
     return apiClient.get('/users')

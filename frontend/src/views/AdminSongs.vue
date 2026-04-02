@@ -206,8 +206,10 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { songAPI, categoryAPI } from '../api'
+import { usePlayerStore } from '../store/player'
 
 const router = useRouter()
+const playerStore = usePlayerStore()
 
 const loading = ref(false)
 const songs = ref([])
@@ -359,7 +361,7 @@ const rejectSong = async (song) => {
 }
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
   ElMessage.info('播放: ' + song.title)
 }
 

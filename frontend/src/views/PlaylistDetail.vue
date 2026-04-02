@@ -147,16 +147,19 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { playlistAPI } from '../api'
 import { Search, VideoPlay, VideoCamera, Collection, Clock, FolderAdd, Share, Plus, Delete } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('3')
 const searchKeyword = ref('')
-const defaultCover = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400'
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultCover = DEFAULT_IMAGES.cover
+const defaultAvatar = DEFAULT_IMAGES.avatar
 
 const playlist = ref({
   name: '',
@@ -168,11 +171,11 @@ const playlist = ref({
 })
 
 const songs = ref([
-  { id: 1, title: '孤勇者', duration: 240, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100', artists: [{ name: '陈奕迅' }], album: { title: '孤勇者' } },
-  { id: 2, title: '起风了', duration: 310, cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100', artists: [{ name: '买辣椒也用券' }], album: { title: '起风了' } },
-  { id: 3, title: '海阔天空', duration: 280, cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=100', artists: [{ name: 'Beyond' }], album: { title: '海阔天空' } },
-  { id: 4, title: '平凡之路', duration: 295, cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=100', artists: [{ name: '朴树' }], album: { title: '平凡之路' } },
-  { id: 5, title: '晴天', duration: 265, cover: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=100', artists: [{ name: '周杰伦' }], album: { title: '叶惠美' } }
+  { id: 1, title: '孤勇者', duration: 240, cover: DEFAULT_IMAGES.cover, artists: [{ name: '陈奕迅' }], album: { title: '孤勇者' } },
+  { id: 2, title: '起风了', duration: 310, cover: DEFAULT_IMAGES.cover, artists: [{ name: '买辣椒也用券' }], album: { title: '起风了' } },
+  { id: 3, title: '海阔天空', duration: 280, cover: DEFAULT_IMAGES.cover, artists: [{ name: 'Beyond' }], album: { title: '海阔天空' } },
+  { id: 4, title: '平凡之路', duration: 295, cover: DEFAULT_IMAGES.cover, artists: [{ name: '朴树' }], album: { title: '平凡之路' } },
+  { id: 5, title: '晴天', duration: 265, cover: DEFAULT_IMAGES.cover, artists: [{ name: '周杰伦' }], album: { title: '叶惠美' } }
 ])
 
 const filteredSongs = computed(() => {
@@ -212,7 +215,7 @@ const playAll = () => {
 }
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
 }
 
 const addToPlaylist = (song) => {
@@ -245,7 +248,7 @@ const loadPlaylist = async () => {
     playlist.value = {
       name: '经典怀旧',
       description: '那些年我们一起听过的经典歌曲，每一首都值得回味',
-      cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400',
+      cover: DEFAULT_IMAGES.cover,
       playCount: 125680,
       songCount: songs.value.length,
       createdAt: '2024-01-15'

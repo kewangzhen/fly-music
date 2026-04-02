@@ -56,6 +56,7 @@
 
 <script setup>
 import { VideoPlay } from '@element-plus/icons-vue'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 
 defineProps({
   rankingData: {
@@ -70,7 +71,7 @@ defineProps({
 
 defineEmits(['play'])
 
-const defaultCover = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100'
+const defaultCover = DEFAULT_IMAGES.cover
 
 const getRankClass = (index) => {
   if (index === 0) return 'rank-first'

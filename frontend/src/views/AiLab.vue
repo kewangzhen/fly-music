@@ -79,10 +79,24 @@
                     <el-tag 
                       v-for="style in musicStyles" 
                       :key="style.value"
-                      :class="{ active: textToMusicForm.style === style.value }"
-                      @click="textToMusicForm.style = style.value"
+                      :class="{ active: textToMusicForm.genre === style.value }"
+                      @click="textToMusicForm.genre = style.value"
                     >
                       {{ style.label }}
+                    </el-tag>
+                  </div>
+                </el-form-item>
+
+                <el-form-item label="音乐心情">
+                  <div class="style-tags">
+                    <el-tag 
+                      v-for="m in musicMoods" 
+                      :key="m.value"
+                      :class="{ active: textToMusicForm.mood === m.value }"
+                      @click="textToMusicForm.mood = m.value"
+                      type="success"
+                    >
+                      {{ m.label }}
                     </el-tag>
                   </div>
                 </el-form-item>
@@ -117,12 +131,12 @@
                   drag
                   :auto-upload="false"
                   :on-change="handleFileChange"
-                  accept=".mp3,.wav,.flac"
+                  accept=".mp3,.wav,.flac,.m4a"
                 >
                   <div class="upload-content">
                     <el-icon class="upload-icon"><Upload /></el-icon>
                     <div class="upload-text">拖拽音乐文件到此处</div>
-                    <div class="upload-hint">支持 MP3、WAV、FLAC 格式</div>
+                    <div class="upload-hint">支持 MP3、WAV、FLAC、M4A 格式</div>
                   </div>
                 </el-upload>
                 
@@ -139,6 +153,36 @@
                   {{ isRecognizing ? '识别中...' : '开始识别' }}
                 </el-button>
               </div>
+
+              <div v-if="recognitionResult" class="recognition-result">
+                <el-divider>识别结果</el-divider>
+                <div class="result-grid">
+                  <div class="result-item">
+                    <span class="result-label">曲风</span>
+                    <span class="result-value">{{ recognitionResult.genre }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">心情</span>
+                    <span class="result-value">{{ recognitionResult.mood }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">BPM</span>
+                    <span class="result-value">{{ recognitionResult.bpm }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">调式</span>
+                    <span class="result-value">{{ recognitionResult.key }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">节拍</span>
+                    <span class="result-value">{{ recognitionResult.timeSignature }}</span>
+                  </div>
+                  <div class="result-item">
+                    <span class="result-label">乐器</span>
+                    <span class="result-value">{{ recognitionResult.instruments?.join(', ') }}</span>
+                  </div>
+                </div>
+              </div>
             </el-card>
           </el-col>
         </el-row>
@@ -152,17 +196,21 @@
           <div class="history-list">
             <div v-for="item in aiHistory" :key="item.id" class="history-item">
               <div class="history-cover">
-                <img :src="item.cover" alt="cover">
-                <el-button circle class="play-btn" type="primary">
+                <img :src="item.cover || defaultCover" alt="cover">
+                <el-button circle class="play-btn" type="primary" @click="playAiMusic(item)">
                   <el-icon><VideoPlay /></el-icon>
                 </el-button>
+                <div v-if="item.status === 0" class="status-badge generating">生成中</div>
+                <div v-if="item.status === 2" class="status-badge failed">失败</div>
               </div>
               <div class="history-info">
-                <h4>{{ item.title }}</h4>
-                <p>{{ item.description }}</p>
-                <span class="history-time">{{ item.time }}</span>
+                <h4>{{ item.prompt?.slice(0, 20) || 'AI生成音乐' }}...</h4>
+                <p>{{ item.genre }} · {{ item.mood }}</p>
+                <span class="history-time">{{ formatTime(item.createdAt) }}</span>
               </div>
-              <el-button text>下载</el-button>
+              <el-button text type="danger" @click="deleteAiRecord(item.id)">
+                <el-icon><Delete /></el-icon>
+              </el-button>
             </div>
           </div>
         </el-card>
@@ -181,21 +229,15 @@
               <canvas ref="waveCanvas" width="600" height="100"></canvas>
             </div>
             <div class="result-info">
-              <h3>{{ generatedResult.title }}</h3>
-              <p>{{ generatedResult.description }}</p>
+              <h3>{{ generatedResult.prompt?.slice(0, 30) }}...</h3>
+              <p>{{ generatedResult.genre }} · {{ generatedResult.mood }} · {{ generatedResult.duration }}秒</p>
               <div class="result-tags">
-                <el-tag>{{ generatedResult.style }}</el-tag>
-                <el-tag type="success">{{ generatedResult.duration }}</el-tag>
+                <el-tag>{{ generatedResult.genre }}</el-tag>
+                <el-tag type="success">{{ generatedResult.duration }}秒</el-tag>
               </div>
               <div class="result-actions">
-                <el-button type="primary" size="large">
+                <el-button type="primary" size="large" @click="playGeneratedMusic">
                   <el-icon><VideoPlay /></el-icon> 播放
-                </el-button>
-                <el-button size="large">
-                  <el-icon><Download /></el-icon> 下载
-                </el-button>
-                <el-button size="large">
-                  <el-icon><Share /></el-icon> 分享
                 </el-button>
               </div>
             </div>
@@ -210,87 +252,203 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
+import aiApi from '../api/ai'
 import { MagicStick, Edit, Microphone, Upload, Document, Delete, VideoPlay, Download, Share, Close } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('5')
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultAvatar = DEFAULT_IMAGES.avatar
+const defaultCover = DEFAULT_IMAGES.cover
 
 const isGenerating = ref(false)
 const isRecognizing = ref(false)
 const uploadedFile = ref(null)
 const generatedResult = ref(null)
+const recognitionResult = ref(null)
 const waveCanvas = ref(null)
+const currentGenerationId = ref(null)
+const pollingTimer = ref(null)
 
 const textToMusicForm = reactive({
   prompt: '',
-  style: '',
+  genre: '流行',
+  mood: '欢快',
   duration: '60'
 })
 
 const musicStyles = [
-  { label: '流行', value: 'pop' },
-  { label: '摇滚', value: 'rock' },
-  { label: '电子', value: 'electronic' },
-  { label: '古典', value: 'classical' },
-  { label: '爵士', value: 'jazz' },
-  { label: '民谣', value: 'folk' },
-  { label: '嘻哈', value: 'hiphop' },
-  { label: 'R&B', value: 'rnb' }
+  { label: '流行', value: '流行' },
+  { label: '摇滚', value: '摇滚' },
+  { label: '电子', value: '电子' },
+  { label: '古典', value: '古典' },
+  { label: '爵士', value: '爵士' },
+  { label: '民谣', value: '民谣' },
+  { label: '说唱', value: '说唱' },
+  { label: 'R&B', value: 'R&B' }
 ]
 
-const aiHistory = ref([
-  { id: 1, title: 'AI生成-001', description: '欢快的电子音乐', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100', time: '2分钟前' },
-  { id: 2, title: 'AI生成-002', description: '舒缓的钢琴曲', cover: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=100', time: '1小时前' },
-  { id: 3, title: 'AI生成-003', description: '激昂的摇滚乐', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100', time: '昨天' }
-])
+const musicMoods = [
+  { label: '欢快', value: '欢快' },
+  { label: '平静', value: '平静' },
+  { label: '悲伤', value: '悲伤' },
+  { label: '激昂', value: '激昂' },
+  { label: '浪漫', value: '浪漫' },
+  { label: '神秘', value: '神秘' }
+]
+
+const aiHistory = ref([])
+
+const loadHistory = async () => {
+  try {
+    const userId = userStore.user?.id || 2
+    const res = await aiApi.getUserGenerations(userId)
+    aiHistory.value = res.data.data || []
+  } catch (e) {
+    console.error('加载历史失败:', e)
+  }
+}
 
 const handleFileChange = (file) => {
   uploadedFile.value = file.raw
+  recognitionResult.value = null
 }
 
 const removeFile = () => {
   uploadedFile.value = null
+  recognitionResult.value = null
 }
 
 const generateMusic = async () => {
-  if (!textToMusicForm.prompt) return
+  if (!textToMusicForm.prompt) {
+    ElMessage.warning('请输入音乐描述')
+    return
+  }
   
   isGenerating.value = true
+  generatedResult.value = null
   
-  setTimeout(() => {
-    const styleLabel = musicStyles.find(s => s.value === textToMusicForm.style)?.label || '混合'
-    generatedResult.value = {
-      title: `AI生成音乐 - ${new Date().toLocaleTimeString()}`,
-      description: textToMusicForm.prompt,
-      style: styleLabel,
-      duration: `${textToMusicForm.duration}秒`
-    }
-    isGenerating.value = false
+  try {
+    const userId = userStore.user?.id || 2
+    await aiApi.generateMusic(
+      textToMusicForm.prompt,
+      textToMusicForm.genre,
+      textToMusicForm.mood,
+      parseInt(textToMusicForm.duration),
+      userId
+    )
     
-    aiHistory.value.unshift({
-      id: Date.now(),
-      title: 'AI生成-' + String(Date.now()).slice(-3),
-      description: textToMusicForm.prompt.slice(0, 30) + '...',
-      cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100',
-      time: '刚刚'
-    })
-  }, 3000)
+    ElMessage.success('AI音乐生成任务已提交，请稍后查看结果')
+    
+    await loadHistory()
+    
+  } catch (e) {
+    ElMessage.error('生成失败: ' + (e.message || '未知错误'))
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+const checkGenerationStatus = async (id) => {
+  try {
+    const res = await aiApi.getGenerationStatus(id)
+    const status = res.data.data
+    
+    if (status.status === 1) {
+      generatedResult.value = status
+      clearInterval(pollingTimer.value)
+      ElMessage.success('音乐生成完成！')
+      await loadHistory()
+    } else if (status.status === 2) {
+      clearInterval(pollingTimer.value)
+      ElMessage.error('音乐生成失败: ' + status.errorMessage)
+    }
+  } catch (e) {
+    console.error('查询状态失败:', e)
+  }
 }
 
 const recognizeMusic = async () => {
-  isRecognizing.value = true
+  if (!uploadedFile.value) {
+    ElMessage.warning('请先上传音乐文件')
+    return
+  }
   
-  setTimeout(() => {
-    generatedResult.value = {
-      title: '识别结果',
-      description: '该音乐为电子舞曲风格，节奏明快，BPM约128，适合派对场景',
-      style: '电子舞曲',
-      duration: '3:45'
-    }
+  isRecognizing.value = true
+  recognitionResult.value = null
+  
+  try {
+    const res = await aiApi.recognizeMusicStyle(uploadedFile.value)
+    recognitionResult.value = res.data.data
+    ElMessage.success('识别成功')
+  } catch (e) {
+    ElMessage.error('识别失败: ' + (e.message || '未知错误'))
+  } finally {
     isRecognizing.value = false
-  }, 2000)
+  }
+}
+
+const playAiMusic = (item) => {
+  if (!item.musicUrl) {
+    ElMessage.warning('音乐还在生成中，请稍后再试')
+    return
+  }
+  
+  const url = aiApi.getSongUrl(item.musicUrl)
+  playerStore.playSong({
+    id: item.id,
+    title: item.prompt?.slice(0, 20) || 'AI生成音乐',
+    url: url,
+    cover: item.cover,
+    duration: item.duration
+  })
+}
+
+const playGeneratedMusic = () => {
+  if (generatedResult.value && generatedResult.value.musicUrl) {
+    const url = aiApi.getSongUrl(generatedResult.value.musicUrl)
+    playerStore.playSong({
+      id: generatedResult.value.id,
+      title: generatedResult.value.prompt?.slice(0, 20) || 'AI生成音乐',
+      url: url,
+      cover: generatedResult.value.cover,
+      duration: generatedResult.value.duration
+    })
+  }
+}
+
+const deleteAiRecord = async (id) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条记录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await aiApi.deleteGeneration(id)
+    ElMessage.success('删除成功')
+    await loadHistory()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+const formatTime = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now - date
+  
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
+  return date.toLocaleDateString()
 }
 
 const handleLogout = () => {
@@ -299,36 +457,32 @@ const handleLogout = () => {
 }
 
 onMounted(() => {
-  userStore.init()
+  loadHistory()
 })
 </script>
 
 <style scoped>
 .ai-lab-page {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background: #0a0a0a;
 }
 
 .navbar {
-  background: rgba(22, 33, 62, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  position: fixed;
+  width: 100%;
+  z-index: 100;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 24px;
-  font-weight: bold;
   cursor: pointer;
 }
 
@@ -337,32 +491,33 @@ onMounted(() => {
 }
 
 .logo-text {
-  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  font-size: 20px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .nav-menu {
-  flex: 1;
-  margin: 0 40px;
+  border: none;
+  background: transparent;
 }
 
 .user-menu {
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-
-.user-info {
-  cursor: pointer;
+  gap: 15px;
 }
 
 .ai-lab-hero {
   position: relative;
-  padding: 80px 40px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   overflow: hidden;
+  margin-top: 60px;
 }
 
 .hero-bg {
@@ -380,31 +535,23 @@ onMounted(() => {
   position: absolute;
   width: 4px;
   height: 4px;
-  background: var(--primary-color);
+  background: rgba(102, 126, 234, 0.6);
   border-radius: 50%;
   left: var(--x);
   top: var(--y);
-  opacity: 0.3;
   animation: float 15s infinite ease-in-out;
   animation-delay: var(--delay);
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translate(100px, -100px) scale(1.5);
-    opacity: 0.6;
-  }
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+  50% { transform: translateY(-100px) scale(1.5); opacity: 0.3; }
 }
 
 .hero-content {
   position: relative;
   text-align: center;
-  max-width: 800px;
-  margin: 0 auto;
+  z-index: 10;
 }
 
 .ai-badge {
@@ -413,63 +560,46 @@ onMounted(() => {
   gap: 8px;
   padding: 8px 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 24px;
+  border-radius: 20px;
+  color: white;
   font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  animation: pulse 2s infinite;
+  margin-bottom: 20px;
 }
 
 .hero-title {
   font-size: 48px;
-  font-weight: bold;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #f093fb 50%, #667eea 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradient 3s linear infinite;
-}
-
-@keyframes gradient {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
+  color: white;
+  margin-bottom: 10px;
 }
 
 .hero-desc {
   font-size: 18px;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .main-content {
-  flex: 1;
   padding: 40px;
-}
-
-.labs-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.lab-card {
-  height: 100%;
-  border-radius: 20px !important;
-  background: var(--card-bg) !important;
-  border: 1px solid var(--border-color) !important;
-  padding: 30px;
-  transition: transform 0.3s, box-shadow 0.3s;
+.labs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
 }
 
-.lab-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+.lab-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 30px;
 }
 
 .lab-icon {
   width: 80px;
   height: 80px;
-  border-radius: 50%;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -488,23 +618,19 @@ onMounted(() => {
 
 .lab-title {
   font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  color: white;
+  margin-bottom: 10px;
 }
 
 .lab-desc {
-  color: var(--text-secondary);
-  margin-bottom: 24px;
-}
-
-.lab-form :deep(.el-form-item__label) {
-  color: var(--text-primary);
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 20px;
 }
 
 .style-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .style-tags .el-tag {
@@ -513,132 +639,115 @@ onMounted(() => {
 }
 
 .style-tags .el-tag.active {
-  background: var(--primary-gradient) !important;
-  color: white !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
 }
 
 .duration-group {
-  width: 100%;
+  margin-top: 10px;
 }
 
-.duration-group :deep(.el-radio-button__inner) {
+.generate-btn, .recognize-btn {
   width: 100%;
-}
-
-.generate-btn,
-.recognize-btn {
-  width: 100%;
-  height: 48px;
-  font-size: 16px;
-  background: var(--primary-gradient);
-  border: none;
   margin-top: 20px;
-}
-
-.generate-btn:hover,
-.recognize-btn:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-}
-
-.upload-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  height: 50px;
+  font-size: 16px;
 }
 
 .music-uploader {
   width: 100%;
 }
 
-.music-uploader :deep(.el-upload-dragger) {
-  background: var(--hover-bg);
-  border: 2px dashed var(--border-color);
-  border-radius: 12px;
-  padding: 40px;
-  transition: all 0.3s;
-}
-
-.music-uploader :deep(.el-upload-dragger:hover) {
-  border-color: var(--primary-color);
-}
-
-.upload-content {
+.upload-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.upload-icon {
-  font-size: 48px;
-  color: var(--primary-color);
-}
-
-.upload-text {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.upload-hint {
-  font-size: 13px;
-  color: var(--text-secondary);
+  gap: 15px;
 }
 
 .file-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--hover-bg);
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
 }
 
 .file-name {
   flex: 1;
+  color: white;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.history-card {
-  margin-top: 30px;
-  border-radius: 20px !important;
+.recognition-result {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.result-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.result-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.result-value {
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.history-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
 }
 
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 15px;
 }
 
 .history-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px;
-  background: var(--hover-bg);
+  gap: 15px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
   transition: all 0.3s;
 }
 
 .history-item:hover {
-  background: rgba(102, 126, 234, 0.15);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .history-cover {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .history-cover img {
@@ -662,30 +771,48 @@ onMounted(() => {
   opacity: 1;
 }
 
+.status-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  color: white;
+}
+
+.status-badge.generating {
+  background: #e6a23c;
+}
+
+.status-badge.failed {
+  background: #f56c6c;
+}
+
 .history-info {
   flex: 1;
 }
 
 .history-info h4 {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 4px;
+  color: white;
+  margin: 0 0 5px 0;
 }
 
 .history-info p {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin: 0;
 }
 
 .history-time {
+  color: rgba(255, 255, 255, 0.4);
   font-size: 12px;
-  color: var(--text-secondary);
 }
 
 .result-card {
-  margin-top: 30px;
-  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
 }
 
 .result-content {
@@ -696,48 +823,57 @@ onMounted(() => {
 
 .result-wave {
   flex-shrink: 0;
-  background: var(--dark-bg);
-  border-radius: 12px;
-  padding: 20px;
-}
-
-.result-wave canvas {
-  display: block;
 }
 
 .result-info h3 {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  color: white;
+  margin: 0 0 10px 0;
 }
 
 .result-info p {
-  color: var(--text-secondary);
-  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 15px;
 }
 
 .result-tags {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
 .result-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
-@media (max-width: 900px) {
-  .labs-container .el-col {
-    margin-bottom: 24px;
-  }
-  
-  .result-content {
-    flex-direction: column;
-  }
-  
-  .hero-title {
-    font-size: 32px;
-  }
+:deep(.el-card) {
+  background: transparent;
+  border: none;
+}
+
+:deep(.el-card__header) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+:deep(.el-form-item__label) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+:deep(.el-textarea__inner) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+:deep(.el-radio-button__inner) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
 }
 </style>

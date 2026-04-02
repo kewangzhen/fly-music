@@ -57,20 +57,18 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     /**
      * 搜索歌曲（标题或歌手名）
      */
-    @Query("SELECT s FROM Song s JOIN s.artists a WHERE s.title LIKE %:keyword% OR a.name LIKE %:keyword%")
+    @Query("SELECT DISTINCT s FROM Song s LEFT JOIN FETCH s.artists a LEFT JOIN FETCH s.category LEFT JOIN FETCH s.album WHERE s.title LIKE %:keyword% OR a.name LIKE %:keyword%")
     List<Song> searchSongs(@Param("keyword") String keyword);
     
     /**
      * 查询热门歌曲
      */
-    @Query("SELECT s FROM Song s WHERE s.status = 1 ORDER BY s.playCount DESC")
-    List<Song> findPopularSongs(Pageable pageable);
+    List<Song> findTopByStatusOrderByPlayCountDesc(Integer status, Pageable pageable);
     
     /**
      * 查询最新歌曲
      */
-    @Query("SELECT s FROM Song s WHERE s.status = 1 ORDER BY s.createdAt DESC")
-    List<Song> findLatestSongs(Pageable pageable);
+    List<Song> findTopByStatusOrderByCreatedAtDesc(Integer status, Pageable pageable);
     
     /**
      * 根据用户播放历史推荐歌曲
@@ -92,9 +90,19 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     long countByStatus(Integer status);
     
     /**
+     * 根据分类ID统计歌曲数量
+     */
+    long countByCategoryId(Long categoryId);
+    
+    /**
      * 分页查询歌曲
      */
     Page<Song> findByStatus(Integer status, Pageable pageable);
+    
+    /**
+     * 根据分类ID分页查询歌曲
+     */
+    Page<Song> findByCategoryId(Long categoryId, Pageable pageable);
     
     /**
      * 根据分类名称查询歌曲（按播放量排序）

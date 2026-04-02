@@ -119,7 +119,7 @@ public class AdminRecommendationServiceImpl implements AdminRecommendationServic
         long activeUsers = playHistoryRepository.countDistinctUsersByPlayedAtBetween(todayStart, today);
         stats.setActiveUsers((int) activeUsers);
 
-        stats.setTotalSongs((int) songRepository.count());
+        stats.setTotalSongs((long) songRepository.count());
         stats.setTotalUsers((int) userRepository.count());
 
         return stats;

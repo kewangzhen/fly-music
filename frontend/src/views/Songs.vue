@@ -98,7 +98,7 @@
               <div class="song-title-cell">
                 <img :src="scope.row.cover" class="song-thumb">
                 <div class="song-info">
-                  <span class="song-title">{{ scope.row.title }}</span>
+                  <span class="song-title" @click="goToSongDetail(scope.row.id)">{{ scope.row.title }}</span>
                   <span class="song-artist">{{ scope.row.artist }}</span>
                 </div>
               </div>
@@ -152,51 +152,110 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { Search, VideoPlay, Plus, Star } from '@element-plus/icons-vue'
+import songApi from '../api/song'
+import categoryApi from '../api/category'
 
 const router = useRouter()
+
+const goToSongDetail = (id) => {
+  router.push(`/song/${id}`)
+}
+
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('2')
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultAvatar = DEFAULT_IMAGES.avatar
+const defaultCover = DEFAULT_IMAGES.cover
 
 const searchKeyword = ref('')
 const selectedCategory = ref(null)
 const currentPage = ref(1)
 const pageSize = ref(10)
-const total = ref(50)
-
-const categoryTags = ref([
-  { id: null, name: '全部' },
-  { id: 1, name: '流行' },
-  { id: 2, name: '摇滚' },
-  { id: 3, name: '民谣' },
-  { id: 4, name: '电子' },
-  { id: 5, name: '嘻哈' },
-  { id: 6, name: '古典' },
-  { id: 7, name: '爵士' },
-  { id: 8, name: 'R&B' }
-])
+const total = ref(0)
+const loading = ref(false)
+const songs = ref([])
+const categoryTags = ref([])
 
 const selectedCategoryName = computed(() => {
   const tag = categoryTags.value.find(t => t.id === selectedCategory.value)
   return tag?.name !== '全部' ? tag?.name : null
 })
 
-const songs = ref([
-  { id: 1, title: '孤勇者', artist: '陈奕迅', duration: 240, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100', album: '孤勇者', playCount: 125680 },
-  { id: 2, title: '起风了', artist: '买辣椒也用券', duration: 260, cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100', album: '起风了', playCount: 98234 },
-  { id: 3, title: '海阔天空', artist: 'Beyond', duration: 300, cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=100', album: '海阔天空', playCount: 87654 },
-  { id: 4, title: '平凡之路', artist: '朴树', duration: 280, cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=100', album: '平凡之路', playCount: 76543 },
-  { id: 5, title: '晴天', artist: '周杰伦', duration: 265, cover: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=100', album: '叶惠美', playCount: 65432 },
-  { id: 6, title: '稻香', artist: '周杰伦', duration: 220, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100', album: '依然', playCount: 54321 },
-  { id: 7, title: '七里香', artist: '周杰伦', duration: 295, cover: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=100', album: '七里香', playCount: 43210 },
-  { id: 8, title: '青花瓷', artist: '周杰伦', duration: 240, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100', album: '依然', playCount: 32109 },
-  { id: 9, title: '夜曲', artist: '周杰伦', duration: 265, cover: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=100', album: '十一月的萧邦', playCount: 21098 },
-  { id: 10, title: '光年之外', artist: '邓紫棋', duration: 250, cover: 'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=100', album: '光年之外', playCount: 19876 }
-])
+const loadCategories = async () => {
+  try {
+    const res = await categoryApi.getAllCategories()
+    if (res.code === 200) {
+      categoryTags.value = [
+        { id: null, name: '全部' },
+        ...res.data
+      ]
+    }
+  } catch (error) {
+    console.error('加载分类失败:', error)
+  }
+}
+
+const loadSongs = async () => {
+  loading.value = true
+  try {
+    let res
+    const page = currentPage.value - 1
+    const size = pageSize.value
+    
+    if (searchKeyword.value) {
+      res = await songApi.searchSongs(searchKeyword.value)
+      songs.value = res.data || []
+      total.value = songs.value.length
+    } else if (selectedCategory.value) {
+      res = await songApi.getSongsByCategory(selectedCategory.value, page, size)
+      songs.value = res.data.content || []
+      total.value = res.data.totalElements || 0
+    } else {
+      res = await songApi.getSongsByPage(page, size)
+      songs.value = res.data.content || []
+      total.value = res.data.totalElements || 0
+    }
+    
+    songs.value = songs.value.map(song => ({
+      ...song,
+      artist: song.artists?.map(a => a.name).join(', ') || '未知歌手',
+      cover: song.cover || defaultCover,
+      album: song.album?.title || '未知专辑'
+    }))
+  } catch (error) {
+    console.error('加载歌曲失败:', error)
+    songs.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const selectCategory = (id) => {
+  selectedCategory.value = id
+  currentPage.value = 1
+  searchKeyword.value = ''
+  loadSongs()
+}
+
+const handleSearch = () => {
+  if (searchKeyword.value) {
+    selectedCategory.value = null
+    currentPage.value = 1
+    loadSongs()
+  }
+}
+
+watch([selectedCategory, currentPage], () => {
+  if (!searchKeyword.value) {
+    loadSongs()
+  }
+})
 
 const formatDuration = (seconds) => {
   if (!seconds) return '00:00'
@@ -213,15 +272,6 @@ const formatPlayCount = (count) => {
   return count
 }
 
-const selectCategory = (id) => {
-  selectedCategory.value = id
-  currentPage.value = 1
-}
-
-const handleSearch = () => {
-  console.log('搜索:', searchKeyword.value)
-}
-
 const playAll = () => {
   if (songs.value.length > 0) {
     playSong(songs.value[0])
@@ -229,7 +279,7 @@ const playAll = () => {
 }
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
 }
 
 const addToPlaylist = (song) => {
@@ -251,6 +301,8 @@ const handleLogout = () => {
 
 onMounted(() => {
   userStore.init()
+  loadCategories()
+  loadSongs()
 })
 </script>
 
@@ -440,6 +492,11 @@ onMounted(() => {
 
 .song-title {
   font-weight: 500;
+  cursor: pointer;
+}
+
+.song-title:hover {
+  color: #409eff;
 }
 
 .song-artist {

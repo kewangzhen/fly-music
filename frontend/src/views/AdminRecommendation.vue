@@ -239,13 +239,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { VideoPlay, Timer, User, Files } from '@element-plus/icons-vue'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { adminAPI } from '../api'
 
 const router = useRouter()
 
 const loading = ref(false)
 const saving = ref(false)
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultAvatar = DEFAULT_IMAGES.avatar
 
 const chartColors = [
   '#667eea', '#f093fb', '#4facfe', '#00f2fe',

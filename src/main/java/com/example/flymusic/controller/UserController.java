@@ -2,6 +2,7 @@ package com.example.flymusic.controller;
 
 import com.example.flymusic.entity.User;
 import com.example.flymusic.service.UserService;
+import com.example.flymusic.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private JwtUtils jwtUtils;
 
     /**
      * 用户注册
@@ -46,7 +50,11 @@ public class UserController {
             String username = loginData.get("username");
             String password = loginData.get("password");
             User user = userService.login(username, password);
-            return ResponseEntity.ok(createSuccessResponse("登录成功", user));
+            String token = jwtUtils.generateToken(user.getId());
+            Map<String, Object> data = new HashMap<>();
+            data.put("user", user);
+            data.put("token", token);
+            return ResponseEntity.ok(createSuccessResponse("登录成功", data));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(createErrorResponse(e.getMessage()));
         }
@@ -57,7 +65,17 @@ public class UserController {
      */
     @GetMapping("/current")
     public ResponseEntity<Map<String, Object>> getCurrentUser(@RequestHeader("Authorization") String token) {
-        return ResponseEntity.ok(createSuccessResponse("获取成功", null));
+        try {
+            String jwtToken = token.replace("Bearer ", "");
+            Long userId = jwtUtils.getUserIdFromToken(jwtToken);
+            Optional<User> user = userService.getUserById(userId);
+            if (user.isPresent()) {
+                return ResponseEntity.ok(createSuccessResponse("获取成功", user.get()));
+            }
+            return ResponseEntity.badRequest().body(createErrorResponse("用户不存在"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
+        }
     }
 
     /**
@@ -160,6 +178,18 @@ public class UserController {
     }
 
     /**
+     * 验证重置令牌
+     */
+    @GetMapping("/verify-token")
+    public ResponseEntity<Map<String, Object>> verifyToken(@RequestParam String token) {
+        boolean valid = userService.validateResetToken(token);
+        if (valid) {
+            return ResponseEntity.ok(createSuccessResponse("令牌有效", true));
+        }
+        return ResponseEntity.badRequest().body(createErrorResponse("令牌无效或已过期"));
+    }
+
+    /**
      * 获取所有用户（管理员）
      */
     @GetMapping
@@ -194,6 +224,47 @@ public class UserController {
         Date expireDate = (Date) data.get("expireDate");
         userService.setVip(id, expireDate);
         return ResponseEntity.ok(createSuccessResponse("VIP设置成功", null));
+    }
+
+    /**
+     * 用户订阅VIP
+     */
+    @PostMapping("/subscribe-vip")
+    public ResponseEntity<Map<String, Object>> subscribeVip(@RequestBody Map<String, Object> data, @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            Long userId = jwtUtils.getUserIdFromToken(authHeader.replace("Bearer ", ""));
+            Integer days = (Integer) data.get("days");
+            if (days == null || days <= 0) {
+                return ResponseEntity.badRequest().body(createErrorResponse("请选择有效的会员天数"));
+            }
+            
+            Date expireDate = new Date(System.currentTimeMillis() + (long) days * 24 * 60 * 60 * 1000);
+            userService.setVip(userId, expireDate);
+            return ResponseEntity.ok(createSuccessResponse("VIP订阅成功", expireDate));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
+        }
+    }
+
+    /**
+     * 获取当前用户VIP状态
+     */
+    @GetMapping("/current/vip")
+    public ResponseEntity<Map<String, Object>> getCurrentUserVipStatus(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            Long userId = jwtUtils.getUserIdFromToken(authHeader.replace("Bearer ", ""));
+            Optional<User> userOpt = userService.getUserById(userId);
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.badRequest().body(createErrorResponse("用户不存在"));
+            }
+            User user = userOpt.get();
+            Map<String, Object> vipInfo = new HashMap<>();
+            vipInfo.put("isVip", user.isVip());
+            vipInfo.put("vipExpireAt", user.getVipExpireAt());
+            return ResponseEntity.ok(createSuccessResponse("获取成功", vipInfo));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
+        }
     }
 
     /**

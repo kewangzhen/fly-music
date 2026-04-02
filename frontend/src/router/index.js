@@ -1,4 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '../store/user'
+import { ElMessage } from 'element-plus'
+
+const whiteList = ['/', '/login', '/register', '/reset-password', '/vip', '/song']
 
 const routes = [
   {
@@ -12,6 +16,11 @@ const routes = [
     component: () => import('../views/Login.vue')
   },
   {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('../views/ResetPassword.vue')
+  },
+  {
     path: '/register',
     name: 'Register',
     component: () => import('../views/Register.vue')
@@ -22,9 +31,19 @@ const routes = [
     component: () => import('../views/Profile.vue')
   },
   {
+    path: '/vip',
+    name: 'Vip',
+    component: () => import('../views/Vip.vue')
+  },
+  {
     path: '/songs',
     name: 'Songs',
     component: () => import('../views/Songs.vue')
+  },
+  {
+    path: '/song/:id',
+    name: 'SongDetail',
+    component: () => import('../views/SongDetail.vue')
   },
   {
     path: '/playlists',
@@ -101,6 +120,24 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore()
+  const token = localStorage.getItem('token')
+  
+  if (token && !userStore.isLoggedIn) {
+    userStore.init()
+  }
+  
+  if (!whiteList.includes(to.path)) {
+    if (!userStore.isLoggedIn || !token) {
+      ElMessage.warning('请登录后继续使用')
+      next('/login')
+      return
+    }
+  }
+  next()
 })
 
 export default router

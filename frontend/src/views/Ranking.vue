@@ -86,13 +86,16 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { recommendationAPI, categoryAPI } from '../api'
 import RankingList from '../components/RankingList.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('3')
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultAvatar = DEFAULT_IMAGES.avatar
 
 const activeTab = ref('global')
 const selectedCategory = ref(null)
@@ -149,7 +152,7 @@ const selectCategory = async (cat) => {
 }
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
 }
 
 const handleLogout = () => {

@@ -108,8 +108,9 @@ public class SongServiceImpl implements SongService {
      * 根据分类ID获取歌曲
      */
     @Override
-    public List<Song> getSongsByCategoryId(Long categoryId) {
-        return songRepository.findByCategoryId(categoryId);
+    public List<Song> getSongsByCategoryId(Long categoryId, int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        return songRepository.findByCategoryIdOrderByPlayCountDesc(categoryId, pageable);
     }
 
     /**
@@ -150,7 +151,7 @@ public class SongServiceImpl implements SongService {
     @Override
     public List<Song> getPopularSongs(int limit) {
         Pageable pageable = PageRequest.of(0, limit);
-        return songRepository.findPopularSongs(pageable);
+        return songRepository.findTopByStatusOrderByPlayCountDesc(1, pageable);
     }
 
     /**
@@ -159,7 +160,7 @@ public class SongServiceImpl implements SongService {
     @Override
     public List<Song> getLatestSongs(int limit) {
         Pageable pageable = PageRequest.of(0, limit);
-        return songRepository.findLatestSongs(pageable);
+        return songRepository.findTopByStatusOrderByCreatedAtDesc(1, pageable);
     }
 
     /**
@@ -223,6 +224,14 @@ public class SongServiceImpl implements SongService {
         return songRepository.findByStatus(status, pageable);
     }
 
+    /**
+     * 根据分类ID分页获取歌曲
+     */
+    @Override
+    public Page<Song> getSongsByCategoryIdPage(Long categoryId, Pageable pageable) {
+        return songRepository.findByCategoryId(categoryId, pageable);
+    }
+    
     /**
      * 统计歌曲总数
      */

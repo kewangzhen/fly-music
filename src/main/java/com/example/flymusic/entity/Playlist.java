@@ -2,6 +2,7 @@ package com.example.flymusic.entity;
 
 import lombok.Data;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Date;
 import java.util.Set;
 
@@ -26,10 +27,12 @@ public class Playlist {
     @Column(name = "cover", length = 255)
     private String cover;
     
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
     
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
         name = "playlist_songs",

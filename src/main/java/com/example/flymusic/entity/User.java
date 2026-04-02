@@ -2,6 +2,7 @@ package com.example.flymusic.entity;
 
 import lombok.Data;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Date;
 import java.util.Set;
 
@@ -41,6 +42,9 @@ public class User {
     @Column(name = "birthdate")
     private Date birthdate;
     
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+    
     @Column(name = "role", columnDefinition = "TINYINT DEFAULT 0")
     private Integer role;
     
@@ -49,6 +53,13 @@ public class User {
     
     @Column(name = "vip_expire_at")
     private Date vipExpireAt;
+    
+    public boolean isVip() {
+        if (vipExpireAt == null) {
+            return false;
+        }
+        return vipExpireAt.after(new Date());
+    }
     
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Date createdAt;
@@ -65,18 +76,23 @@ public class User {
     @Column(name = "reset_token_expire_at")
     private Date resetTokenExpireAt;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<Playlist> playlists;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<PlayHistory> playHistories;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<UserFavorite> favorites;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<Post> posts;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private Set<AiMusicGeneration> aiGenerations;
 }

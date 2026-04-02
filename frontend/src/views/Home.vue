@@ -205,7 +205,12 @@
 
     <div class="player-bar" v-if="currentSong">
       <div class="player-progress">
-        <div class="progress-bar" :style="{ width: `${playProgress}%` }"></div>
+        <el-slider 
+          v-model="progressPercent" 
+          :show-tooltip="false" 
+          class="progress-slider"
+          @change="handleProgressChange"
+        />
       </div>
       <div class="player-content">
         <div class="player-song-info">
@@ -254,7 +259,7 @@
             <div class="link-group">
               <h4>产品</h4>
               <a href="#">音乐服务</a>
-              <a href="#">VIP会员</a>
+              <a @click="router.push('/vip')" style="cursor: pointer;">VIP会员</a>
               <a href="#">AI音乐</a>
             </div>
             <div class="link-group">
@@ -274,47 +279,69 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { songAPI, playlistAPI, albumAPI, artistAPI } from '../api'
 import { Search, Bell, User, Star, Clock, VideoPlay, VideoPause, VideoCamera, ArrowRight, DArrowLeft, DArrowRight, List, SwitchButton } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('1')
 const searchKeyword = ref('')
-const defaultCover = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400'
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultCover = DEFAULT_IMAGES.cover
+const defaultAvatar = DEFAULT_IMAGES.avatar
 
-const currentSong = ref(null)
-const isPlaying = ref(false)
+const currentSong = computed(() => playerStore.currentSong)
+const isPlaying = computed(() => playerStore.isPlaying)
 const isFavorited = ref(false)
-const playProgress = ref(30)
-const currentTime = ref(120)
-const duration = ref(240)
 const volume = ref(80)
+
+const currentTime = computed(() => playerStore.currentTime)
+const duration = computed(() => playerStore.duration)
+
+const progressPercent = computed(() => {
+  if (!duration.value || duration.value === 0) return 0
+  return (currentTime.value / duration.value) * 100
+})
+
+const handleProgressClick = (event) => {
+  if (!duration.value) return
+  const rect = event.currentTarget.getBoundingClientRect()
+  const percent = (event.clientX - rect.left) / rect.width
+  const newTime = percent * duration.value
+  playerStore.seek(newTime)
+}
+
+const handleProgressChange = (value) => {
+  if (!duration.value) return
+  const newTime = (value / 100) * duration.value
+  playerStore.seek(newTime)
+}
 
 const banners = ref([
   {
     id: 1,
     title: '发现好音乐',
     description: '探索最热门的歌曲和专辑',
-    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1600',
+    image: DEFAULT_IMAGES.cover,
     type: 'popular'
   },
   {
     id: 2,
     title: 'AI音乐实验室',
     description: '用AI创造属于你的音乐',
-    image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1600',
+    image: DEFAULT_IMAGES.album,
     type: 'ai-lab'
   },
   {
     id: 3,
     title: '个性化推荐',
     description: '为你量身定制的音乐推荐',
-    image: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=1600',
+    image: DEFAULT_IMAGES.playlist,
     type: 'heart'
   }
 ])
@@ -323,12 +350,12 @@ const hotSongs = ref([])
 const heartPlaylists = ref([])
 const latestAlbums = ref([])
 const hotArtists = ref([
-  { id: 1, name: '周杰伦', avatar: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=200' },
-  { id: 2, name: '林俊杰', avatar: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200' },
-  { id: 3, name: '邓紫棋', avatar: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=200' },
-  { id: 4, name: '陈奕迅', avatar: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=200' },
-  { id: 5, name: '五月天', avatar: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=200' },
-  { id: 6, name: '薛之谦', avatar: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=200' }
+  { id: 1, name: '周杰伦', avatar: DEFAULT_IMAGES.avatar },
+  { id: 2, name: '林俊杰', avatar: DEFAULT_IMAGES.avatar },
+  { id: 3, name: '邓紫棋', avatar: DEFAULT_IMAGES.avatar },
+  { id: 4, name: '陈奕迅', avatar: DEFAULT_IMAGES.avatar },
+  { id: 5, name: '五月天', avatar: DEFAULT_IMAGES.avatar },
+  { id: 6, name: '薛之谦', avatar: DEFAULT_IMAGES.avatar }
 ])
 
 const getArtistNames = (song) => {
@@ -346,13 +373,17 @@ const formatPlayCount = (count) => {
 }
 
 const formatTime = (seconds) => {
-  const min = Math.floor(seconds / 60)
-  const sec = seconds % 60
+  if (!seconds || isNaN(seconds)) return '00:00'
+  const totalSeconds = Math.floor(seconds)
+  const min = Math.floor(totalSeconds / 60)
+  const sec = totalSeconds % 60
   return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`
 }
 
 const handleBannerClick = (banner) => {
-  if (banner.type === 'ai-lab') {
+  if (banner.type === 'popular' || banner.type === 'discover') {
+    router.push('/songs')
+  } else if (banner.type === 'ai-lab') {
     router.push('/ai-lab')
   } else if (banner.type === 'heart') {
     router.push('/recommendations')
@@ -366,8 +397,9 @@ const handleSearch = () => {
 }
 
 const playSong = (song) => {
-  currentSong.value = song
-  isPlaying.value = true
+  const songs = hotSongs.value || []
+  const index = songs.findIndex(s => s.id === song.id)
+  playerStore.setPlaylist(songs, index >= 0 ? index : 0)
 }
 
 const viewPlaylist = (playlist) => {
@@ -383,7 +415,7 @@ const viewArtist = (artist) => {
 }
 
 const togglePlay = () => {
-  isPlaying.value = !isPlaying.value
+  playerStore.togglePlay()
 }
 
 const toggleFavorite = () => {
@@ -391,11 +423,11 @@ const toggleFavorite = () => {
 }
 
 const prevSong = () => {
-  console.log('上一首')
+  playerStore.playPrev()
 }
 
 const nextSong = () => {
-  console.log('下一首')
+  playerStore.playNext()
 }
 
 const handleLogout = () => {
@@ -406,38 +438,61 @@ const handleLogout = () => {
 const loadData = async () => {
   try {
     const songsRes = await songAPI.getPopularSongs(8)
-    hotSongs.value = songsRes.data?.map(s => ({
-      ...s,
-      cover: s.cover || defaultCover
-    })) || []
-    
-    const playlistsRes = await playlistAPI.getHeartPlaylists(4)
-    heartPlaylists.value = playlistsRes.data || []
-    
-    const albumsRes = await albumAPI.getAllAlbums()
-    latestAlbums.value = (albumsRes.data || []).slice(0, 4).map(a => ({
-      ...a,
-      cover: a.cover || defaultCover
-    }))
+    if (songsRes.data) {
+      hotSongs.value = songsRes.data.map(s => ({
+        ...s,
+        cover: s.cover || defaultCover
+      }))
+    }
   } catch (error) {
-    console.error('加载数据失败:', error)
+    console.warn('热门歌曲加载失败，使用默认数据')
+  }
+  
+  try {
+    const playlistsRes = await playlistAPI.getHeartPlaylists(4)
+    if (playlistsRes.data) {
+      heartPlaylists.value = playlistsRes.data
+    }
+  } catch (error) {
+    console.warn('心动歌单加载失败，使用默认数据')
+  }
+  
+  try {
+    const albumsRes = await albumAPI.getAllAlbums()
+    if (albumsRes.data) {
+      latestAlbums.value = albumsRes.data.slice(0, 4).map(a => ({
+        ...a,
+        cover: a.cover || defaultCover
+      }))
+    }
+  } catch (error) {
+    console.warn('最新专辑加载失败，使用默认数据')
+  }
+  
+  if (hotSongs.value.length === 0) {
     hotSongs.value = [
-      { id: 1, title: '孤勇者', playCount: 100000, cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400' },
-      { id: 2, title: '起风了', playCount: 80000, cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400' },
-      { id: 3, title: '海阔天空', playCount: 75000, cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400' },
-      { id: 4, title: '平凡之路', playCount: 60000, cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400' }
+      { id: 1, title: '孤勇者', playCount: 100000, cover: DEFAULT_IMAGES.cover },
+      { id: 2, title: '起风了', playCount: 80000, cover: DEFAULT_IMAGES.cover },
+      { id: 3, title: '海阔天空', playCount: 75000, cover: DEFAULT_IMAGES.cover },
+      { id: 4, title: '平凡之路', playCount: 60000, cover: DEFAULT_IMAGES.cover }
     ]
+  }
+  
+  if (heartPlaylists.value.length === 0) {
     heartPlaylists.value = [
-      { id: 1, name: '经典怀旧', songCount: 50, cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400' },
-      { id: 2, name: '轻松舒缓', songCount: 30, cover: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=400' },
-      { id: 3, name: '动感节奏', songCount: 40, cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400' },
-      { id: 4, name: '睡前必备', songCount: 25, cover: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=400' }
+      { id: 1, name: '经典怀旧', songCount: 50, cover: DEFAULT_IMAGES.playlist },
+      { id: 2, name: '轻松舒缓', songCount: 30, cover: DEFAULT_IMAGES.playlist },
+      { id: 3, name: '动感节奏', songCount: 40, cover: DEFAULT_IMAGES.playlist },
+      { id: 4, name: '睡前必备', songCount: 25, cover: DEFAULT_IMAGES.playlist }
     ]
+  }
+  
+  if (latestAlbums.value.length === 0) {
     latestAlbums.value = [
-      { id: 1, title: '新专辑', artist: { name: '歌手A' }, cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400' },
-      { id: 2, title: '最新EP', artist: { name: '歌手B' }, cover: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400' },
-      { id: 3, title: '创作集', artist: { name: '歌手C' }, cover: 'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400' },
-      { id: 4, title: '精选集', artist: { name: '歌手D' }, cover: 'https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=400' }
+      { id: 1, title: '新专辑', artist: { name: '歌手A' }, cover: DEFAULT_IMAGES.album },
+      { id: 2, title: '最新EP', artist: { name: '歌手B' }, cover: DEFAULT_IMAGES.album },
+      { id: 3, title: '创作集', artist: { name: '歌手C' }, cover: DEFAULT_IMAGES.album },
+      { id: 4, title: '精选集', artist: { name: '歌手D' }, cover: DEFAULT_IMAGES.album }
     ]
   }
 }
@@ -774,8 +829,32 @@ onMounted(() => {
 }
 
 .player-progress {
+  position: absolute;
+  top: -15px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  padding: 7px 0;
+  cursor: pointer;
+}
+
+.player-progress .el-slider {
+  --el-slider-runway-bg-color: var(--border-color);
+  --el-slider-main-bg-color: var(--primary-color);
+  --el-slider-button-wrapper-size: 16px;
+  --el-slider-button-size: 12px;
+}
+
+.player-progress .el-slider .el-slider__runway {
   height: 3px;
-  background: var(--border-color);
+}
+
+.player-progress .el-slider .el-slider__bar {
+  height: 3px;
+}
+
+.player-progress .el-slider .el-slider__button-wrapper {
+  top: -6px;
 }
 
 .progress-bar {

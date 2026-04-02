@@ -10,6 +10,10 @@ export const useUserStore = defineStore('user', {
     token: null
   }),
   
+  getters: {
+    isAuthenticated: (state) => state.isLoggedIn && state.token
+  },
+  
   actions: {
     async login(username, password) {
       try {
@@ -18,12 +22,12 @@ export const useUserStore = defineStore('user', {
           password
         })
         
-        this.token = response.data
+        const data = response.data.data
+        this.token = data.token
         this.isLoggedIn = true
         localStorage.setItem('token', this.token)
         
-        // 获取用户信息
-        await this.getUserProfile()
+        this.user = data.user
         
         return true
       } catch (error) {
@@ -47,13 +51,13 @@ export const useUserStore = defineStore('user', {
         const token = localStorage.getItem('token')
         if (!token) return
         
-        const response = await axios.get(`${API_BASE_URL}/users/profile`, {
+        const response = await axios.get(`${API_BASE_URL}/users/current`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         })
         
-        this.user = response.data
+        this.user = response.data.data
       } catch (error) {
         console.error('Failed to get user profile:', error)
       }
@@ -64,6 +68,36 @@ export const useUserStore = defineStore('user', {
       this.user = null
       this.token = null
       localStorage.removeItem('token')
+    },
+    
+    async resetPassword(email) {
+      try {
+        await axios.post(`${API_BASE_URL}/users/reset-password`, { email })
+        return true
+      } catch (error) {
+        console.error('Reset password failed:', error)
+        return false
+      }
+    },
+    
+    async updatePasswordByToken(token, newPassword) {
+      try {
+        await axios.post(`${API_BASE_URL}/users/update-password`, { token, newPassword })
+        return true
+      } catch (error) {
+        console.error('Update password failed:', error)
+        return false
+      }
+    },
+    
+    async verifyToken(token) {
+      try {
+        await axios.get(`${API_BASE_URL}/users/verify-token`, { params: { token } })
+        return true
+      } catch (error) {
+        console.error('Verify token failed:', error)
+        return false
+      }
     },
     
     init() {

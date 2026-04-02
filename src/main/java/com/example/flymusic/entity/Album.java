@@ -2,8 +2,9 @@ package com.example.flymusic.entity;
 
 import lombok.Data;
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.Date;
-import java.util.Set;
 
 /**
  * 专辑实体类
@@ -20,7 +21,7 @@ public class Album {
     @Column(name = "title", nullable = false, length = 100)
     private String title;
     
-    @Column(name = "cover", length = 255)
+    @Column(name = "cover")
     private String cover;
     
     @Column(name = "release_date")
@@ -29,6 +30,8 @@ public class Album {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
     
+    @JsonIgnore
+    @JsonIgnoreProperties({"songs", "albums"})
     @ManyToOne
     @JoinColumn(name = "artist_id")
     private Artist artist;
@@ -47,7 +50,4 @@ public class Album {
     
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private Date updatedAt;
-    
-    @OneToMany(mappedBy = "album", cascade = CascadeType.ALL)
-    private Set<Song> songs;
 }

@@ -184,62 +184,65 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { VideoPlay, Plus } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('4')
 const activeTab = ref('daily')
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultAvatar = DEFAULT_IMAGES.avatar
 
 const dailyRecommendations = ref([
-  { id: 1, title: '孤勇者', artist: '陈奕迅', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400' },
-  { id: 2, title: '起风了', artist: '买辣椒也用券', cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400' },
-  { id: 3, title: '海阔天空', artist: 'Beyond', cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400' },
-  { id: 4, title: '平凡之路', artist: '朴树', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400' },
-  { id: 5, title: '晴天', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=400' },
-  { id: 6, title: '稻香', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400' },
-  { id: 7, title: '夜曲', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=400' },
-  { id: 8, title: '青花瓷', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400' }
+  { id: 1, title: '孤勇者', artist: '陈奕迅', cover: DEFAULT_IMAGES.cover },
+  { id: 2, title: '起风了', artist: '买辣椒也用券', cover: DEFAULT_IMAGES.cover },
+  { id: 3, title: '海阔天空', artist: 'Beyond', cover: DEFAULT_IMAGES.cover },
+  { id: 4, title: '平凡之路', artist: '朴树', cover: DEFAULT_IMAGES.cover },
+  { id: 5, title: '晴天', artist: '周杰伦', cover: DEFAULT_IMAGES.cover },
+  { id: 6, title: '稻香', artist: '周杰伦', cover: DEFAULT_IMAGES.cover },
+  { id: 7, title: '夜曲', artist: '周杰伦', cover: DEFAULT_IMAGES.cover },
+  { id: 8, title: '青花瓷', artist: '周杰伦', cover: DEFAULT_IMAGES.cover }
 ])
 
 const similarRecommendations = ref([
-  { id: 9, title: '光年之外', artist: '邓紫棋', cover: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400' },
-  { id: 10, title: '病变', artist: '鞠文娴', cover: 'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400' },
-  { id: 11, title: '嚣张', artist: 'en', cover: 'https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=400' },
-  { id: 12, title: '芒种', artist: '音阙诗听', cover: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400' },
-  { id: 13, title: '盗将行', artist: '花粥', cover: 'https://images.unsplash.com/photo-1483401757487-6c62c21f7a8a?w=400' },
-  { id: 14, title: '出山', artist: '花粥', cover: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400' },
-  { id: 15, title: '卡点音乐', artist: 'DJ', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400' },
-  { id: 16, title: '评论歌曲', artist: 'Various', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400' }
+  { id: 9, title: '光年之外', artist: '邓紫棋', cover: DEFAULT_IMAGES.cover },
+  { id: 10, title: '病变', artist: '鞠文娴', cover: DEFAULT_IMAGES.cover },
+  { id: 11, title: '嚣张', artist: 'en', cover: DEFAULT_IMAGES.cover },
+  { id: 12, title: '芒种', artist: '音阙诗听', cover: DEFAULT_IMAGES.cover },
+  { id: 13, title: '盗将行', artist: '花粥', cover: DEFAULT_IMAGES.cover },
+  { id: 14, title: '出山', artist: '花粥', cover: DEFAULT_IMAGES.cover },
+  { id: 15, title: '卡点音乐', artist: 'DJ', cover: DEFAULT_IMAGES.cover },
+  { id: 16, title: '评论歌曲', artist: 'Various', cover: DEFAULT_IMAGES.cover }
 ])
 
 const hotRecommendations = ref([
-  { id: 17, title: '野狼Disco', artist: '宝石Gem', cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400' },
-  { id: 18, title: '下山', artist: '要不要买菜', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400' },
-  { id: 19, title: '江南', artist: '林俊杰', cover: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=400' },
-  { id: 20, title: '倒带', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400' },
-  { id: 21, title: '黑色幽默', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=400' },
-  { id: 22, title: '彩虹', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400' },
-  { id: 23, title: '七里香', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400' },
-  { id: 24, title: '以父之名', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400' }
+  { id: 17, title: '野狼Disco', artist: '宝石Gem', cover: DEFAULT_IMAGES.cover },
+  { id: 18, title: '下山', artist: '要不要买菜', cover: DEFAULT_IMAGES.cover },
+  { id: 19, title: '江南', artist: '林俊杰', cover: DEFAULT_IMAGES.cover },
+  { id: 20, title: '倒带', artist: '周杰伦', cover: DEFAULT_IMAGES.cover },
+  { id: 21, title: '黑色幽默', artist: '周杰伦', cover: DEFAULT_IMAGES.cover },
+  { id: 22, title: '彩虹', artist: '周杰伦', cover: DEFAULT_IMAGES.cover },
+  { id: 23, title: '七里香', artist: '周杰伦', cover: DEFAULT_IMAGES.cover },
+  { id: 24, title: '以父之名', artist: '周杰伦', cover: DEFAULT_IMAGES.cover }
 ])
 
 const radarList = ref([
-  { id: 25, title: '世界这么大还是遇见你', artist: '程响', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400' },
-  { id: 26, title: '万爱千恩', artist: '王琪', cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400' },
-  { id: 27, title: '酒醉的蝴蝶', artist: '崔伟立', cover: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400' },
-  { id: 28, title: '谁', artist: '小阿枫', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=400' },
-  { id: 29, title: '少年', artist: '梦然', cover: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=400' },
-  { id: 30, title: '可不可以', artist: '张紫豪', cover: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400' },
-  { id: 31, title: '广东爱情故事', artist: '广东雨神', cover: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=400' },
-  { id: 32, title: '陷阱', artist: '王北车', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400' },
-  { id: 33, title: '不只是 пох', artist: '木小雅', cover: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400' },
-  { id: 34, title: '知否知否', artist: '胡夏/郁可唯', cover: 'https://images.unsplash.com/photo-1485579149621-3123dd979885?w=400' }
+  { id: 25, title: '世界这么大还是遇见你', artist: '程响', cover: DEFAULT_IMAGES.cover },
+  { id: 26, title: '万爱千恩', artist: '王琪', cover: DEFAULT_IMAGES.cover },
+  { id: 27, title: '酒醉的蝴蝶', artist: '崔伟立', cover: DEFAULT_IMAGES.cover },
+  { id: 28, title: '谁', artist: '小阿枫', cover: DEFAULT_IMAGES.cover },
+  { id: 29, title: '少年', artist: '梦然', cover: DEFAULT_IMAGES.cover },
+  { id: 30, title: '可不可以', artist: '张紫豪', cover: DEFAULT_IMAGES.cover },
+  { id: 31, title: '广东爱情故事', artist: '广东雨神', cover: DEFAULT_IMAGES.cover },
+  { id: 32, title: '陷阱', artist: '王北车', cover: DEFAULT_IMAGES.cover },
+  { id: 33, title: '不只是 пох', artist: '木小雅', cover: DEFAULT_IMAGES.cover },
+  { id: 34, title: '知否知否', artist: '胡夏/郁可唯', cover: DEFAULT_IMAGES.cover }
 ])
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
 }
 
 const handleLogout = () => {

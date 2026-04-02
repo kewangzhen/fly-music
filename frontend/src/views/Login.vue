@@ -61,7 +61,7 @@
           
           <div class="form-options">
             <el-checkbox v-model="rememberMe">记住我</el-checkbox>
-            <el-link type="primary" :underline="false">忘记密码？</el-link>
+            <el-link type="primary" :underline="false" @click="showForgotDialog = true">忘记密码？</el-link>
           </div>
           
           <el-button 
@@ -174,6 +174,23 @@
       </p>
     </div>
   </div>
+
+  <el-dialog v-model="showForgotDialog" title="找回密码" width="400px" :close-on-click-modal="false">
+    <el-form :model="forgotForm" :rules="forgotRules" ref="forgotFormRef">
+      <el-form-item prop="email">
+        <el-input 
+          v-model="forgotForm.email" 
+          placeholder="请输入注册邮箱"
+          size="large"
+          :prefix-icon="Message"
+        ></el-input>
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showForgotDialog = false">取消</el-button>
+      <el-button type="primary" :loading="forgotLoading" @click="handleForgotPassword">发送重置链接</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
@@ -189,6 +206,40 @@ const userStore = useUserStore()
 const activeTab = ref('login')
 const loading = ref(false)
 const rememberMe = ref(false)
+
+const showForgotDialog = ref(false)
+const forgotLoading = ref(false)
+const forgotFormRef = ref(null)
+const forgotForm = reactive({
+  email: ''
+})
+
+const forgotRules = {
+  email: [
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ]
+}
+
+const handleForgotPassword = async () => {
+  const valid = await forgotFormRef.value.validate().catch(() => false)
+  if (!valid) return
+  
+  forgotLoading.value = true
+  try {
+    const res = await userStore.resetPassword(forgotForm.email)
+    if (res) {
+      ElMessage.success('重置链接已发送到您的邮箱，请注意查收')
+      showForgotDialog.value = false
+    } else {
+      ElMessage.error('该邮箱未注册')
+    }
+  } catch (error) {
+    ElMessage.error('发送失败，请重试')
+  } finally {
+    forgotLoading.value = false
+  }
+}
 
 const loginFormRef = ref(null)
 const registerFormRef = ref(null)

@@ -51,12 +51,11 @@ public class HotRanking {
      */
     @Column(name = "song_id", nullable = false)
     private Long songId;
-    
+
     /**
-     * 排名
      * 歌曲在榜单中的排名，从1开始
      */
-    @Column(name = "rank", nullable = false)
+    @Column(name = "`rank`", nullable = false)
     private Integer rank;
     
     /**

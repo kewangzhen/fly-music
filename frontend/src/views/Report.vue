@@ -208,13 +208,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import recommendationApi from '../api/recommendation'
 
 const router = useRouter()
 const userStore = useUserStore()
 const activeIndex = ref('4')
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
-const defaultCover = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=200'
+const defaultAvatar = DEFAULT_IMAGES.avatar
+const defaultCover = DEFAULT_IMAGES.cover
 
 const currentYear = new Date().getFullYear()
 const selectedYear = ref(currentYear)

@@ -1,7 +1,22 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  server: {
+    proxy: {
+      '/api/songs/file': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/api/categories': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/api/covers': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
+  }
 })

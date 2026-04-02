@@ -122,15 +122,18 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { recommendationAPI } from '../api'
 import { Loading, VideoPlay, Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('4')
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
-const defaultCover = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100'
+const defaultAvatar = DEFAULT_IMAGES.avatar
+const defaultCover = DEFAULT_IMAGES.cover
 
 const loading = ref(true)
 const radarData = ref(null)
@@ -178,6 +181,7 @@ const playAll = () => {
 }
 
 const playSong = (song) => {
+  playerStore.playSong(song)
   recommendationAPI.recordBehavior(song.id, 1)
   ElMessage.success(`正在播放: ${song.title}`)
 }

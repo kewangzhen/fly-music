@@ -243,12 +243,15 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePlayerStore } from '../store/player'
+import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { Edit, Star, ChatDotRound, Share, Picture, Headset, Location, More, VideoPlay } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const playerStore = usePlayerStore()
 const activeIndex = ref('6')
-const defaultAvatar = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'
+const defaultAvatar = DEFAULT_IMAGES.avatar
 
 const postDialogVisible = ref(false)
 const postForm = reactive({
@@ -259,7 +262,7 @@ const commentInputs = ref({})
 
 const currentUser = ref({
   username: '音乐爱好者',
-  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+  avatar: DEFAULT_IMAGES.avatar,
   bio: '热爱音乐，分享好歌',
   followers: 128,
   following: 256,
@@ -267,9 +270,9 @@ const currentUser = ref({
 })
 
 const recommendedUsers = ref([
-  { id: 1, username: '周杰伦', avatar: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=100', followers: 10000 },
-  { id: 2, username: '林俊杰', avatar: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100', followers: 8000 },
-  { id: 3, username: '邓紫棋', avatar: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=100', followers: 6000 }
+  { id: 1, username: '周杰伦', avatar: DEFAULT_IMAGES.avatar, followers: 10000 },
+  { id: 2, username: '林俊杰', avatar: DEFAULT_IMAGES.avatar, followers: 8000 },
+  { id: 3, username: '邓紫棋', avatar: DEFAULT_IMAGES.avatar, followers: 6000 }
 ])
 
 const trendingTopics = ref([
@@ -281,31 +284,31 @@ const trendingTopics = ref([
 ])
 
 const songOptions = ref([
-  { id: 1, title: '孤勇者', artist: '陈奕迅', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100' },
-  { id: 2, title: '起风了', artist: '买辣椒也用券', cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100' },
-  { id: 3, title: '晴天', artist: '周杰伦', cover: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=100' }
+  { id: 1, title: '孤勇者', artist: '陈奕迅', cover: DEFAULT_IMAGES.cover },
+  { id: 2, title: '起风了', artist: '买辣椒也用券', cover: DEFAULT_IMAGES.cover },
+  { id: 3, title: '晴天', artist: '周杰伦', cover: DEFAULT_IMAGES.cover }
 ])
 
 const posts = ref([
   {
     id: 1,
-    user: { username: '音乐达人', avatar: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=100' },
+    user: { username: '音乐达人', avatar: DEFAULT_IMAGES.avatar },
     content: '今天听了一首很好听的歌，分享给大家！新专辑太棒了！',
-    song: { id: 1, title: '孤勇者', artist: '陈奕迅', cover: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100' },
+    song: { id: 1, title: '孤勇者', artist: '陈奕迅', cover: DEFAULT_IMAGES.cover },
     likes: 128,
     isLiked: false,
     comments: [
-      { id: 1, user: { username: '小明', avatar: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?w=100' }, content: '确实很好听！', createdAt: new Date(Date.now() - 3600000) },
-      { id: 2, user: { username: '小红', avatar: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100' }, content: '我也喜欢这首歌', createdAt: new Date(Date.now() - 1800000) }
+      { id: 1, user: { username: '小明', avatar: DEFAULT_IMAGES.avatar }, content: '确实很好听！', createdAt: new Date(Date.now() - 3600000) },
+      { id: 2, user: { username: '小红', avatar: DEFAULT_IMAGES.avatar }, content: '我也喜欢这首歌', createdAt: new Date(Date.now() - 1800000) }
     ],
     showComments: false,
     createdAt: new Date(Date.now() - 7200000)
   },
   {
     id: 2,
-    user: { username: '歌单收藏家', avatar: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100' },
+    user: { username: '歌单收藏家', avatar: DEFAULT_IMAGES.avatar },
     content: '推荐一个很棒的歌单，都是我喜欢的类型，每一首都是精品！',
-    song: { id: 2, title: '起风了', artist: '买辣椒也用券', cover: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=100' },
+    song: { id: 2, title: '起风了', artist: '买辣椒也用券', cover: DEFAULT_IMAGES.cover },
     likes: 86,
     isLiked: true,
     comments: [],
@@ -314,12 +317,12 @@ const posts = ref([
   },
   {
     id: 3,
-    user: { username: 'AI音乐爱好者', avatar: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=100' },
+    user: { username: 'AI音乐爱好者', avatar: DEFAULT_IMAGES.avatar },
     content: '刚刚体验了AI音乐实验室，功能太强大了！可以自己创作音乐，真的太酷了！',
     likes: 256,
     isLiked: false,
     comments: [
-      { id: 3, user: { username: '科技控', avatar: 'https://images.unsplash.com/photo-1501612780327-45045538702b?w=100' }, content: '真的假的？求链接', createdAt: new Date(Date.now() - 3600000) }
+      { id: 3, user: { username: '科技控', avatar: DEFAULT_IMAGES.avatar }, content: '真的假的？求链接', createdAt: new Date(Date.now() - 3600000) }
     ],
     showComments: false,
     createdAt: new Date(Date.now() - 28800000)
@@ -392,7 +395,7 @@ const followUser = (user) => {
 }
 
 const playSong = (song) => {
-  console.log('播放歌曲:', song)
+  playerStore.playSong(song)
 }
 
 const handleLogout = () => {

@@ -21,12 +21,7 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
      * 根据标题搜索专辑
      */
     List<Album> findByTitleContaining(String title);
-    
-    /**
-     * 根据名称搜索专辑
-     */
-    List<Album> findByNameContaining(String name);
-    
+
     /**
      * 根据艺术家ID查询专辑
      */

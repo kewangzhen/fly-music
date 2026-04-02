@@ -41,7 +41,7 @@ public interface SongService {
     /**
      * 根据分类ID获取歌曲
      */
-    List<Song> getSongsByCategoryId(Long categoryId);
+    List<Song> getSongsByCategoryId(Long categoryId, int limit);
     
     /**
      * 根据艺术家ID获取歌曲
@@ -97,6 +97,11 @@ public interface SongService {
      * 分页获取歌曲
      */
     Page<Song> getSongsByPage(Integer status, Pageable pageable);
+    
+    /**
+     * 根据分类ID分页获取歌曲
+     */
+    Page<Song> getSongsByCategoryIdPage(Long categoryId, Pageable pageable);
     
     /**
      * 统计歌曲总数

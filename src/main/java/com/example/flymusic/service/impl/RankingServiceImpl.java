@@ -54,7 +54,7 @@ public class RankingServiceImpl implements RankingService {
     @Override
     public HotRankingDTO getGlobalRanking() {
         List<HotRanking> rankings = hotRankingRepository
-            .findByRankingTypeAndCategoryIdIsNullOrderByRankAsc(RankingType.GLOBAL.getCode());
+            .findGlobalByRankingType(RankingType.GLOBAL.getCode());
         
         HotRankingDTO dto = new HotRankingDTO(RankingType.GLOBAL.getCode(), "热门榜");
         
@@ -78,7 +78,7 @@ public class RankingServiceImpl implements RankingService {
         String title = category != null ? category.getName() + "热门榜" : "分类热门榜";
         
         List<HotRanking> rankings = hotRankingRepository
-            .findByRankingTypeAndCategoryIdOrderByRankAsc(RankingType.CATEGORY.getCode(), categoryId);
+            .findByRankingTypeAndCategory(RankingType.CATEGORY.getCode(), categoryId);
         
         HotRankingDTO dto = new HotRankingDTO(RankingType.CATEGORY.getCode(), title);
         
@@ -99,7 +99,7 @@ public class RankingServiceImpl implements RankingService {
     @Override
     public HotRankingDTO getNewSongRanking() {
         List<HotRanking> rankings = hotRankingRepository
-            .findByRankingTypeAndCategoryIdIsNullOrderByRankAsc(RankingType.NEW.getCode());
+            .findGlobalByRankingType(RankingType.NEW.getCode());
         
         HotRankingDTO dto = new HotRankingDTO(RankingType.NEW.getCode(), "新歌榜");
         
@@ -120,7 +120,7 @@ public class RankingServiceImpl implements RankingService {
     @Override
     public HotRankingDTO getSoaringRanking() {
         List<HotRanking> rankings = hotRankingRepository
-            .findByRankingTypeAndCategoryIdIsNullOrderByRankAsc(RankingType.SOARING.getCode());
+            .findGlobalByRankingType(RankingType.SOARING.getCode());
         
         HotRankingDTO dto = new HotRankingDTO(RankingType.SOARING.getCode(), "飙升榜");
         
