@@ -1,41 +1,5 @@
 <template>
   <div class="radar-page">
-    <el-header height="60px" class="navbar">
-      <div class="logo" @click="$router.push('/')">
-        <span class="logo-icon">🎵</span>
-        <span class="logo-text">Fly Music</span>
-      </div>
-      <el-menu :default-active="activeIndex" mode="horizontal" class="nav-menu" :router="true">
-        <el-menu-item index="/" route="/">首页</el-menu-item>
-        <el-menu-item index="/songs" route="/songs">音乐</el-menu-item>
-        <el-menu-item index="/playlists" route="/playlists">歌单</el-menu-item>
-        <el-menu-item index="/recommendations" route="/recommendations">推荐</el-menu-item>
-        <el-menu-item index="/ai-lab" route="/ai-lab">AI实验室</el-menu-item>
-        <el-menu-item index="/social" route="/social">社交</el-menu-item>
-      </el-menu>
-      <div class="user-menu">
-        <template v-if="userStore.isLoggedIn">
-          <el-dropdown>
-            <div class="user-info">
-              <el-avatar :size="32" :src="userStore.user?.avatar || defaultAvatar">
-                {{ userStore.user?.username?.charAt(0)?.toUpperCase() || 'U' }}
-              </el-avatar>
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="$router.push('/profile')">个人中心</el-dropdown-item>
-                <el-dropdown-item @click="$router.push('/report')">听歌报告</el-dropdown-item>
-                <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </template>
-        <template v-else>
-          <el-button @click="$router.push('/login')">登录</el-button>
-        </template>
-      </div>
-    </el-header>
-
     <el-main class="main-content">
       <div class="page-header">
         <h1 class="page-title">

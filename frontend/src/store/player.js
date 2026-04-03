@@ -1,23 +1,57 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import songApi from '../api/song'
 import apiClient from '../api/axios'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from './user'
 
 const getBaseURL = () => {
   return apiClient.defaults.baseURL || 'http://localhost:8080/api'
 }
 
+const STORAGE_KEY = 'fly_music_playlist'
+
+const loadFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch (e) {
+    console.error('加载播放队列失败:', e)
+  }
+  return { playlist: [], currentIndex: 0, currentSong: null }
+}
+
+const saveToStorage = (data) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+  } catch (e) {
+    console.error('保存播放队列失败:', e)
+  }
+}
+
 export const usePlayerStore = defineStore('player', () => {
-  const currentSong = ref(null)
-  const playlist = ref([])
-  const currentIndex = ref(-1)
+  const storedData = loadFromStorage()
+  
+  const currentSong = ref(storedData.currentSong || null)
+  const playlist = ref(storedData.playlist || [])
+  const currentIndex = ref(storedData.currentIndex ?? -1)
   const isPlaying = ref(false)
   const audio = ref(null)
   const currentTime = ref(0)
   const duration = ref(0)
   const isVip = ref(false)
   const hasShownVipTip = ref(false)
+  const currentSongFavorite = ref(false)
+
+  watch([playlist, currentIndex, currentSong], () => {
+    saveToStorage({
+      playlist: playlist.value,
+      currentIndex: currentIndex.value,
+      currentSong: currentSong.value
+    })
+  }, { deep: true })
 
   const checkVipStatus = async () => {
     try {
@@ -78,20 +112,123 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
+  const recordPlayHistory = async (songId) => {
+    const userStore = useUserStore()
+    const token = localStorage.getItem('token')
+    
+    if (!userStore.user && token) {
+      await userStore.getUserProfile()
+    }
+    
+    console.log('recordPlayHistory called:', { songId, token: !!token, userId: userStore.user?.id })
+    if (!token || !songId || !userStore.user?.id) return
+    
+    const songIdNum = Number(songId)
+    if (isNaN(songIdNum)) return
+    
+    try {
+      const response = await fetch(`${getBaseURL()}/play-history`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: userStore.user.id, songId: songIdNum, duration: 0 })
+      })
+      const data = await response.json()
+      console.log('Play history record response:', data)
+    } catch (error) {
+      console.error('记录播放历史失败:', error)
+    }
+  }
+
+  const checkFavorite = async (songId) => {
+    const userStore = useUserStore()
+    const token = localStorage.getItem('token')
+    if (!token || !userStore.user?.id || !songId) return false
+    
+    try {
+      const response = await fetch(`${getBaseURL()}/favorites/check?userId=${userStore.user.id}&targetType=1&targetId=${songId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      if (data.code === 200) {
+        currentSongFavorite.value = data.data
+        return data.data
+      }
+    } catch (error) {
+      console.error('检查收藏状态失败:', error)
+    }
+    return false
+  }
+
+  const toggleFavorite = async (songId) => {
+    const userStore = useUserStore()
+    const token = localStorage.getItem('token')
+    if (!token || !userStore.user?.id || !songId) return
+    
+    const isFavorited = currentSongFavorite.value
+    
+    try {
+      if (isFavorited) {
+        await fetch(`${getBaseURL()}/favorites/remove`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ userId: userStore.user.id, targetType: 1, targetId: songId })
+        })
+        currentSongFavorite.value = false
+        ElMessage.success('已取消收藏')
+      } else {
+        await fetch(`${getBaseURL()}/favorites`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ userId: userStore.user.id, targetType: 1, targetId: songId })
+        })
+        currentSongFavorite.value = true
+        ElMessage.success('已添加到收藏')
+      }
+    } catch (error) {
+      console.error('收藏操作失败:', error)
+    }
+  }
+
   const getFullUrl = (url) => {
     if (!url) return ''
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url
     }
+    // 确保URL以/开头，避免路径拼接问题
+    const normalizedUrl = url.startsWith('/') ? url : `/${url}`
     const baseURL = getBaseURL().replace('/api', '')
-    return `${baseURL}${url}`
+    return `${baseURL}${normalizedUrl}`
   }
 
-  const playSong = async (song) => {
+  const playSong = async (song, autoAddToQueue = true) => {
     await checkVipStatus()
     initAudio()
 
+    if (autoAddToQueue) {
+      const exists = playlist.value.some(s => s.id === song.id)
+      if (!exists) {
+        playlist.value.push(song)
+        currentIndex.value = playlist.value.length - 1
+      } else {
+        currentIndex.value = playlist.value.findIndex(s => s.id === song.id)
+      }
+    }
+
     currentSong.value = song
+
+    recordPlayHistory(song.id)
+    checkFavorite(song.id)
 
     const url = getFullUrl(song.url)
     if (url) {
@@ -141,12 +278,64 @@ export const usePlayerStore = defineStore('player', () => {
     playSong(playlist.value[currentIndex.value])
   }
 
-  const setPlaylist = (songs, startIndex = 0) => {
-    playlist.value = [...songs]
-    currentIndex.value = startIndex
-    if (songs.length > 0) {
+  const setPlaylist = (songs, startIndex = 0, autoPlay = true) => {
+    const newPlaylist = [...songs]
+    const newIndex = startIndex
+    
+    playlist.value = newPlaylist
+    currentIndex.value = newIndex
+    
+    if (autoPlay && songs.length > 0) {
       playSong(songs[startIndex])
     }
+  }
+
+  const addToQueue = (song) => {
+    const exists = playlist.value.some(s => s.id === song.id)
+    if (!exists) {
+      playlist.value.push(song)
+    }
+  }
+
+  const addToQueueNext = (song) => {
+    const exists = playlist.value.some(s => s.id === song.id)
+    if (!exists) {
+      const insertIndex = currentIndex.value + 1
+      playlist.value.splice(insertIndex, 0, song)
+    }
+  }
+
+  const removeFromQueue = (index) => {
+    if (index < 0 || index >= playlist.value.length) return
+    
+    playlist.value.splice(index, 1)
+    
+    if (index < currentIndex.value) {
+      currentIndex.value--
+    } else if (index === currentIndex.value) {
+      if (playlist.value.length > 0) {
+        if (currentIndex.value >= playlist.value.length) {
+          currentIndex.value = playlist.value.length - 1
+        }
+        if (currentIndex.value >= 0) {
+          playSong(playlist.value[currentIndex.value])
+        } else {
+          stop()
+          currentSong.value = null
+        }
+      } else {
+        stop()
+        currentSong.value = null
+        currentIndex.value = -1
+      }
+    }
+  }
+
+  const clearQueue = () => {
+    stop()
+    playlist.value = []
+    currentIndex.value = -1
+    currentSong.value = null
   }
 
   const stop = () => {
@@ -180,8 +369,15 @@ export const usePlayerStore = defineStore('player', () => {
     playNext,
     playPrev,
     setPlaylist,
+    addToQueue,
+    addToQueueNext,
+    removeFromQueue,
+    clearQueue,
     stop,
     seek,
-    getFullUrl
+    getFullUrl,
+    currentSongFavorite,
+    checkFavorite,
+    toggleFavorite
   }
 })

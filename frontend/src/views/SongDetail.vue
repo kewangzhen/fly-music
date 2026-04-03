@@ -25,7 +25,15 @@
           <div class="song-meta">
             <span class="meta-item">
               <el-icon><Microphone /></el-icon>
-              {{ song.artists?.map(a => a.name).join(', ') || '未知歌手' }}
+              <span 
+                v-for="(artist, index) in (song.artists || [])" 
+                :key="artist.id"
+                class="artist-name-link"
+                @click="goToArtistDetail(artist.id)"
+              >
+                {{ artist.name }}{{ index < song.artists.length - 1 ? ', ' : '' }}
+              </span>
+              <span v-if="!song.artists?.length">未知歌手</span>
             </span>
             <span class="meta-item">
               <el-icon><FolderOpened /></el-icon>
@@ -267,6 +275,10 @@ const goBack = () => {
   router.back()
 }
 
+const goToArtistDetail = (id) => {
+  router.push(`/artist/${id}`)
+}
+
 onMounted(() => {
   getSongDetail()
   getComments()
@@ -394,6 +406,15 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.artist-name-link {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.artist-name-link:hover {
+  color: #409eff;
 }
 
 .song-stats {

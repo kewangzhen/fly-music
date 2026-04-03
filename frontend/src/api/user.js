@@ -62,5 +62,25 @@ export default {
   // 设置VIP（管理员）
   setVip(id, expireDate) {
     return apiClient.post(`/users/${id}/vip`, { expireDate })
+  },
+
+  // 获取用户收藏
+  getFavorites(userId) {
+    return apiClient.get(`/favorites/user/${userId}`)
+  },
+
+  // 添加收藏
+  addFavorite(userId, targetType, targetId) {
+    return apiClient.post('/favorites', { userId, targetType, targetId })
+  },
+
+  // 移除收藏
+  removeFavorite(userId, targetType, targetId) {
+    return apiClient.delete('/favorites/remove', { data: { userId, targetType, targetId } })
+  },
+
+  // 检查是否收藏
+  checkFavorite(userId, targetType, targetId) {
+    return apiClient.get(`/favorites/check`, { params: { userId, targetType, targetId } })
   }
 }

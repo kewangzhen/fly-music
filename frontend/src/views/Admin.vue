@@ -1,27 +1,5 @@
 <template>
   <div class="admin-container">
-    <!-- 导航栏 -->
-    <el-header height="60px" class="navbar">
-      <div class="logo" @click="$router.push('/')">Fly Music 管理后台</div>
-      <el-menu mode="horizontal" :router="true" class="nav-menu">
-        <el-menu-item index="/admin" route="/admin">概览</el-menu-item>
-        <el-menu-item index="/admin/users" route="/admin/users">用户管理</el-menu-item>
-        <el-menu-item index="/admin/songs" route="/admin/songs">音乐管理</el-menu-item>
-        <el-menu-item index="/admin/config" route="/admin/config">系统配置</el-menu-item>
-      </el-menu>
-      <div class="user-menu">
-        <el-dropdown>
-          <span class="user-avatar">管理员</span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="$router.push('/')">返回前台</el-dropdown-item>
-              <el-dropdown-item @click="handleLogout">退出</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </el-header>
-    
     <!-- 主要内容 -->
     <el-main class="main-content">
       <!-- 统计卡片 -->

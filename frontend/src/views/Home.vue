@@ -1,64 +1,5 @@
 <template>
   <div class="home-container">
-    <el-header height="60px" class="navbar">
-      <div class="logo">
-        <span class="logo-icon">🎵</span>
-        <span class="logo-text">Fly Music</span>
-      </div>
-      <el-menu :default-active="activeIndex" mode="horizontal" class="nav-menu" :router="true">
-        <el-menu-item index="/" route="/">首页</el-menu-item>
-        <el-menu-item index="/songs" route="/songs">音乐</el-menu-item>
-        <el-menu-item index="/playlists" route="/playlists">歌单</el-menu-item>
-        <el-menu-item index="/recommendations" route="/recommendations">推荐</el-menu-item>
-        <el-menu-item index="/ai-lab" route="/ai-lab">AI实验室</el-menu-item>
-        <el-menu-item index="/social" route="/social">社交</el-menu-item>
-      </el-menu>
-      <div class="user-menu">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索音乐、歌手..."
-          class="search-input"
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <template v-if="userStore.isLoggedIn">
-          <el-badge :value="3" class="notification-badge">
-            <el-icon size="20"><Bell /></el-icon>
-          </el-badge>
-          <el-dropdown>
-            <div class="user-info">
-              <el-avatar :size="36" :src="userStore.user?.avatar || defaultAvatar">
-                {{ userStore.user?.username?.charAt(0)?.toUpperCase() || 'U' }}
-              </el-avatar>
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="$router.push('/profile')">
-                  <el-icon><User /></el-icon>个人中心
-                </el-dropdown-item>
-                <el-dropdown-item @click="$router.push('/profile?tab=favorites')">
-                  <el-icon><Star /></el-icon>我的收藏
-                </el-dropdown-item>
-                <el-dropdown-item @click="$router.push('/profile?tab=history')">
-                  <el-icon><Clock /></el-icon>播放历史
-                </el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout">
-                  <el-icon><SwitchButton /></el-icon>退出登录
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </template>
-        <template v-else>
-          <el-button class="login-btn" @click="$router.push('/login')">登录</el-button>
-          <el-button type="primary" class="register-btn" @click="$router.push('/register')">注册</el-button>
-        </template>
-      </div>
-    </el-header>
-    
     <el-main class="main-content">
       <el-carousel :interval="4000" height="400px" class="hero-carousel" indicator-position="outside">
         <el-carousel-item v-for="(item, index) in banners" :key="index">
@@ -88,6 +29,10 @@
         <div class="action-item" @click="$router.push('/ai-lab')">
           <div class="action-icon ai"></div>
           <span>AI音乐</span>
+        </div>
+        <div class="action-item" @click="$router.push('/artists')">
+          <div class="action-icon artist"></div>
+          <span>歌手</span>
         </div>
         <div class="action-item" @click="$router.push('/playlists')">
           <div class="action-icon playlist"></div>
@@ -285,13 +230,11 @@ import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { songAPI, playlistAPI, albumAPI, artistAPI } from '../api'
-import { Search, Bell, User, Star, Clock, VideoPlay, VideoPause, VideoCamera, ArrowRight, DArrowLeft, DArrowRight, List, SwitchButton } from '@element-plus/icons-vue'
+import { VideoPlay, VideoPause, VideoCamera, ArrowRight, DArrowLeft, DArrowRight, List } from '@element-plus/icons-vue'
 
 const router = useRouter()
-const userStore = useUserStore()
 const playerStore = usePlayerStore()
 const activeIndex = ref('1')
-const searchKeyword = ref('')
 const defaultCover = DEFAULT_IMAGES.cover
 const defaultAvatar = DEFAULT_IMAGES.avatar
 
@@ -390,12 +333,6 @@ const handleBannerClick = (banner) => {
   }
 }
 
-const handleSearch = () => {
-  if (searchKeyword.value) {
-    router.push(`/songs?keyword=${searchKeyword.value}`)
-  }
-}
-
 const playSong = (song) => {
   const songs = hotSongs.value || []
   const index = songs.findIndex(s => s.id === song.id)
@@ -428,11 +365,6 @@ const prevSong = () => {
 
 const nextSong = () => {
   playerStore.playNext()
-}
-
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
 }
 
 const loadData = async () => {
@@ -498,7 +430,6 @@ const loadData = async () => {
 }
 
 onMounted(() => {
-  userStore.init()
   loadData()
 })
 </script>
@@ -681,6 +612,10 @@ onMounted(() => {
 
 .action-icon.playlist {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.action-icon.artist {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
 }
 
 .section {

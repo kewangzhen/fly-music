@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { ElMessage } from 'element-plus'
 
-const whiteList = ['/', '/login', '/register', '/reset-password', '/vip', '/song']
+const whiteList = ['/', '/login', '/register', '/reset-password', '/vip', '/song', '/artist', '/artists', '/profile']
 
 const routes = [
   {
@@ -39,6 +39,16 @@ const routes = [
     path: '/songs',
     name: 'Songs',
     component: () => import('../views/Songs.vue')
+  },
+  {
+    path: '/artists',
+    name: 'Artists',
+    component: () => import('../views/Artists.vue')
+  },
+  {
+    path: '/artist/:id',
+    name: 'ArtistDetail',
+    component: () => import('../views/ArtistDetail.vue')
   },
   {
     path: '/song/:id',
