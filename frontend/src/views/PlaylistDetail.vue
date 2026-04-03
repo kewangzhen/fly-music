@@ -105,6 +105,25 @@
 
       <el-empty v-if="filteredSongs.length === 0" description="暂无歌曲" />
     </el-main>
+
+    <el-dialog v-model="addToPlaylistDialogVisible" title="添加到歌单" width="400px">
+      <el-form label-position="top">
+        <el-form-item label="选择歌单">
+          <el-select v-model="selectedPlaylistId" placeholder="请选择歌单" style="width: 100%">
+            <el-option
+              v-for="playlist in userPlaylists"
+              :key="playlist.id"
+              :label="playlist.name"
+              :value="playlist.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addToPlaylistDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmAddToPlaylist">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -179,12 +198,70 @@ const playSong = (song) => {
   playerStore.playSong(song)
 }
 
-const addToPlaylist = (song) => {
-  console.log('添加到播放列表:', song)
+const userPlaylists = ref([])
+const addToPlaylistDialogVisible = ref(false)
+const selectedPlaylistId = ref(null)
+const currentSong = ref(null)
+
+const loadUserPlaylists = async () => {
+  if (!userStore.user?.id) return
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch(`http://localhost:8080/api/playlists/user/${userStore.user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      userPlaylists.value = data.data || []
+    }
+  } catch (error) {
+    console.error('加载用户歌单失败:', error)
+  }
 }
 
-const removeSong = (song) => {
-  console.log('从播放列表移除:', song)
+const addToPlaylist = async (song) => {
+  if (!userStore.user?.id) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  currentSong.value = song
+  await loadUserPlaylists()
+  if (userPlaylists.value.length === 0) {
+    ElMessage.warning('请先创建歌单')
+    return
+  }
+  selectedPlaylistId.value = userPlaylists.value[0]?.id
+  addToPlaylistDialogVisible.value = true
+}
+
+const confirmAddToPlaylist = async () => {
+  if (!selectedPlaylistId.value || !currentSong.value) return
+  const token = localStorage.getItem('token')
+  try {
+    await fetch(`http://localhost:8080/api/playlists/${selectedPlaylistId.value}/songs/${currentSong.value.id}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    ElMessage.success('添加成功')
+    addToPlaylistDialogVisible.value = false
+  } catch (error) {
+    ElMessage.error('添加失败')
+  }
+}
+
+const removeSong = async (song) => {
+  const token = localStorage.getItem('token')
+  const playlistId = route.params.id
+  try {
+    await fetch(`http://localhost:8080/api/playlists/${playlistId}/songs/${song.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    ElMessage.success('移除成功')
+    songs.value = songs.value.filter(s => s.id !== song.id)
+  } catch (error) {
+    ElMessage.error('移除失败')
+  }
 }
 
 const handleLogout = () => {
