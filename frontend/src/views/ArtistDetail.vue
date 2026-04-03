@@ -157,11 +157,53 @@ const followArtist = async () => {
     router.push('/login')
     return
   }
-  ElMessage.info('关注功能开发中')
+  
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('http://localhost:8080/api/social/artist/follow', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        userId: userStore.user.id,
+        artistId: artist.value.id,
+        artistName: artist.value.name,
+        artistAvatar: artist.value.avatar
+      })
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success('关注成功')
+      isFollowing.value = true
+    } else {
+      ElMessage.error(data.message || '关注失败')
+    }
+  } catch (error) {
+    ElMessage.error('关注失败')
+  }
 }
 
-const unfollowArtist = () => {
-  ElMessage.info('取消关注功能开发中')
+const unfollowArtist = async () => {
+  const token = localStorage.getItem('token')
+  try {
+    await fetch('http://localhost:8080/api/social/artist/follow', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        userId: userStore.user.id,
+        artistId: artist.value.id
+      })
+    })
+    ElMessage.success('取消关注成功')
+    isFollowing.value = false
+  } catch (error) {
+    ElMessage.error('取消关注失败')
+  }
 }
 
 const playSong = (song) => {
@@ -196,10 +238,25 @@ const goBack = () => {
   router.back()
 }
 
+const checkFollowStatus = async () => {
+  if (!userStore.user?.id) return
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch(`http://localhost:8080/api/social/artist/check-follow?userId=${userStore.user.id}&artistId=${route.params.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    isFollowing.value = data.data?.following || false
+  } catch (error) {
+    console.error('检查关注状态失败:', error)
+  }
+}
+
 onMounted(() => {
   getArtistDetail()
   getArtistSongs()
   getArtistAlbums()
+  checkFollowStatus()
 })
 </script>
 
