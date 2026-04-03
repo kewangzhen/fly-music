@@ -120,7 +120,7 @@
                   </div>
                   <div class="action-item" @click="showComments(post)">
                     <el-icon><ChatDotRound /></el-icon>
-                    <span>{{ post.comments.length }}</span>
+                    <span>{{ post.comments?.length || 0 }}</span>
                   </div>
                   <div class="action-item">
                     <el-icon><Share /></el-icon>
@@ -129,9 +129,9 @@
                 </div>
                 
                 <div v-if="post.showComments" class="comments-section">
-                  <div v-if="post.comments.length > 0" class="comments-list">
+                  <div v-if="post.comments?.length > 0" class="comments-list">
                     <div v-for="comment in post.comments" :key="comment.id" class="comment-item">
-                      <el-avatar :size="32" :src="comment.user.avatar">{{ comment.user.username.charAt(0) }}</el-avatar>
+                      <el-avatar :size="32" :src="comment.user?.avatar">{{ comment.user?.username?.charAt(0) }}</el-avatar>
                       <div class="comment-content">
                         <div class="comment-header">
                           <span class="comment-username">{{ comment.user.username }}</span>
