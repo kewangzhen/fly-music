@@ -53,6 +53,16 @@
     </div>
 
     <div class="player-right">
+      <el-popover placement="top" :width="200" trigger="click">
+        <template #reference>
+          <el-button circle size="small" class="volume-btn">
+            <el-icon><VolumeMute v-if="playerStore.volume === 0" /><VolumeSmall v-else-if="playerStore.volume < 0.5" /><VolumeLarge v-else /></el-icon>
+          </el-button>
+        </template>
+        <div class="volume-control">
+          <el-slider v-model="playerStore.volume" :min="0" :max="1" :step="0.01" @change="handleVolumeChange" />
+        </div>
+      </el-popover>
       <el-button circle size="small" @click="handleToggleFavorite" class="favorite-btn" :class="{ 'is-favorited': playerStore.currentSongFavorite }">
         <el-icon><Star /></el-icon>
       </el-button>
@@ -121,7 +131,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '../store/player'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
-import { DArrowLeft, DArrowRight, VideoPlay, VideoPause, List, Close, Delete, Star } from '@element-plus/icons-vue'
+import { DArrowLeft, DArrowRight, VideoPlay, VideoPause, List, Close, Delete, Star, VolumeMute, VolumeSmall, VolumeLarge } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -178,6 +188,10 @@ const goToArtistDetail = (id) => {
 const handleToggleFavorite = async () => {
   if (!playerStore.currentSong?.id) return
   await playerStore.toggleFavorite(playerStore.currentSong.id)
+}
+
+const handleVolumeChange = (val) => {
+  playerStore.setVolume(val)
 }
 
 const isSongFavorited = (songId) => {
@@ -328,6 +342,20 @@ const toggleQueueFavorite = async (song) => {
 
 .playlist-btn:hover {
   color: #fff;
+}
+
+.volume-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.volume-btn:hover {
+  color: #fff;
+}
+
+.volume-control {
+  padding: 10px;
 }
 
 .favorite-btn {

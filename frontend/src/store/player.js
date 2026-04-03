@@ -44,6 +44,7 @@ export const usePlayerStore = defineStore('player', () => {
   const isVip = ref(false)
   const hasShownVipTip = ref(false)
   const currentSongFavorite = ref(false)
+  const volume = ref(parseFloat(localStorage.getItem('volume') || '0.7'))
 
   watch([playlist, currentIndex, currentSong], () => {
     saveToStorage({
@@ -80,6 +81,7 @@ export const usePlayerStore = defineStore('player', () => {
   const initAudio = () => {
     if (!audio.value) {
       audio.value = new Audio()
+      audio.value.volume = volume.value
       audio.value.addEventListener('ended', () => {
         playNext()
       })
@@ -367,6 +369,14 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
+  const setVolume = (val) => {
+    volume.value = val
+    if (audio.value) {
+      audio.value.volume = val
+    }
+    localStorage.setItem('volume', val.toString())
+  }
+
   return {
     currentSong,
     playlist,
@@ -376,6 +386,8 @@ export const usePlayerStore = defineStore('player', () => {
     currentTime,
     duration,
     isVip,
+    volume,
+    setVolume,
     checkVipStatus,
     playSong,
     togglePlay,
