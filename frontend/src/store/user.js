@@ -105,8 +105,9 @@ export const useUserStore = defineStore('user', {
       if (token) {
         this.token = token
         this.isLoggedIn = true
-        this.getUserProfile()
+        return this.getUserProfile()
       }
+      return Promise.resolve()
     }
   }
 })

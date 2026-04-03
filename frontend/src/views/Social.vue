@@ -608,12 +608,14 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-onMounted(() => {
-  userStore.init()
-  loadCurrentUserStats()
+onMounted(async () => {
+  await userStore.init()
+  if (userStore.user?.id) {
+    loadCurrentUserStats()
+    loadRecommendedUsers()
+    loadFollowingArtists()
+  }
   loadPosts()
-  loadRecommendedUsers()
-  loadFollowingArtists()
 })
 </script>
 
