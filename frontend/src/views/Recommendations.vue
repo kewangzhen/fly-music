@@ -150,12 +150,12 @@
           </div>
         </el-tab-pane>
         
-        <el-tab-pane label="雷达榜单" name="radar">
+        <el-tab-pane label="雷达歌单" name="radar">
           <div class="recommendation-section">
             <div class="section-header">
               <div class="section-title-wrapper">
                 <span class="section-icon radar">📡</span>
-                <h2>雷达榜单</h2>
+                <h2>雷达歌单</h2>
               </div>
             </div>
             <div class="radar-list">
