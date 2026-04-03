@@ -20,6 +20,9 @@
           <span v-if="!playerStore.currentSong.artists?.length">未知歌手</span>
         </div>
       </div>
+      <el-button circle size="small" @click="handleToggleFavorite" class="favorite-btn-left" :class="{ 'is-favorited': playerStore.currentSongFavorite }">
+        <el-icon><Star /></el-icon>
+      </el-button>
     </div>
 
     <div class="player-center">
@@ -66,9 +69,6 @@
           @change="handleVolumeChange"
         />
       </div>
-      <el-button circle size="small" @click="handleToggleFavorite" class="favorite-btn" :class="{ 'is-favorited': playerStore.currentSongFavorite }">
-        <el-icon><Star /></el-icon>
-      </el-button>
       <el-button circle size="small" @click="showPlaylist = true" class="playlist-btn">
         <el-icon><List /></el-icon>
         <span class="badge" v-if="playerStore.playlist.length">{{ playerStore.playlist.length }}</span>
@@ -233,7 +233,21 @@ const toggleQueueFavorite = async (song) => {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 250px;
+  width: 280px;
+}
+
+.favorite-btn-left {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.favorite-btn-left:hover {
+  color: #fff;
+}
+
+.favorite-btn-left.is-favorited {
+  color: #f5a623;
 }
 
 .song-cover {
@@ -387,20 +401,6 @@ const toggleQueueFavorite = async (song) => {
 
 .volume-btn:hover {
   color: #fff;
-}
-
-.favorite-btn {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.favorite-btn:hover {
-  color: #fff;
-}
-
-.favorite-btn.is-favorited {
-  color: #f6ad55 !important;
 }
 
 .badge {
