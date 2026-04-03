@@ -160,23 +160,23 @@
           <el-card class="trending-card">
             <template #header>
               <div class="card-header">
-                <span>发现歌手</span>
+                <span>推荐关注</span>
               </div>
             </template>
             <div class="trending-list">
-              <div v-for="artist in recommendedArtists" :key="artist.id" class="trending-item">
-                <el-avatar :size="36" :src="artist.avatar || DEFAULT_IMAGES.avatar">{{ artist.name?.charAt(0) }}</el-avatar>
+              <div v-for="user in recommendedUsers" :key="user.id" class="trending-item">
+                <el-avatar :size="36" :src="user.avatar">{{ user.username?.charAt(0) }}</el-avatar>
                 <div class="topic-info">
-                  <span class="topic-name">{{ artist.name }}</span>
-                  <span class="topic-posts">{{ artist.followers || 0 }} 粉丝</span>
+                  <span class="topic-name">{{ user.nickname || user.username }}</span>
+                  <span class="topic-posts">{{ user.followers || 0 }} 粉丝</span>
                 </div>
                 <el-button 
                   size="small" 
                   round 
-                  :type="artist.isFollowing ? 'default' : 'primary'"
-                  @click="toggleFollowArtist(artist)"
+                  :type="user.isFollowing ? 'default' : 'primary'"
+                  @click="handleFollow(user)"
                 >
-                  {{ artist.isFollowing ? '已关注' : '关注' }}
+                  {{ user.isFollowing ? '已关注' : '关注' }}
                 </el-button>
               </div>
             </div>
@@ -357,84 +357,6 @@ const handleFollowArtist = async (artist) => {
       })
       ElMessage.success('关注成功')
       artist.isFollowing = true
-    }
-  } catch (error) {
-    ElMessage.error('操作失败')
-  }
-}
-
-const recommendedArtists = ref([])
-
-const loadRecommendedArtists = async () => {
-  const token = localStorage.getItem('token')
-  try {
-    const res = await fetch('http://localhost:8080/api/artists', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      const artists = (data.data || []).slice(0, 10)
-      for (const artist of artists) {
-        artist.isFollowing = false
-        if (userStore.user?.id) {
-          const followRes = await fetch(`http://localhost:8080/api/social/artist/check-follow?userId=${userStore.user.id}&artistId=${artist.id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-          const followData = await followRes.json()
-          artist.isFollowing = followData.data?.following || false
-        }
-      }
-      recommendedArtists.value = artists
-    }
-  } catch (error) {
-    console.error('加载推荐歌手失败:', error)
-  }
-}
-
-const toggleFollowArtist = async (artist) => {
-  if (!userStore.user?.id) {
-    ElMessage.warning('请先登录')
-    return
-  }
-  
-  const token = localStorage.getItem('token')
-  try {
-    if (artist.isFollowing) {
-      await fetch('http://localhost:8080/api/social/artist/follow', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: userStore.user.id,
-          artistId: artist.id
-        })
-      })
-      ElMessage.success('取消关注成功')
-      artist.isFollowing = false
-      followingArtists.value = followingArtists.value.filter(a => a.artistId !== artist.id)
-    } else {
-      await fetch('http://localhost:8080/api/social/artist/follow', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: userStore.user.id,
-          artistId: artist.id,
-          artistName: artist.name,
-          artistAvatar: artist.avatar
-        })
-      })
-      ElMessage.success('关注成功')
-      artist.isFollowing = true
-      followingArtists.value.push({
-        artistId: artist.id,
-        artistName: artist.name,
-        artistAvatar: artist.avatar
-      })
     }
   } catch (error) {
     ElMessage.error('操作失败')
@@ -692,7 +614,6 @@ onMounted(() => {
   loadPosts()
   loadRecommendedUsers()
   loadFollowingArtists()
-  loadRecommendedArtists()
 })
 </script>
 
