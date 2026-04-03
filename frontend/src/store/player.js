@@ -145,7 +145,15 @@ export const usePlayerStore = defineStore('player', () => {
   const checkFavorite = async (songId) => {
     const userStore = useUserStore()
     const token = localStorage.getItem('token')
-    if (!token || !userStore.user?.id || !songId) return false
+    
+    if (!userStore.user && token) {
+      await userStore.getUserProfile()
+    }
+    
+    if (!token || !userStore.user?.id || !songId) {
+      currentSongFavorite.value = false
+      return false
+    }
     
     try {
       const response = await fetch(`${getBaseURL()}/favorites/check?userId=${userStore.user.id}&targetType=1&targetId=${songId}`, {

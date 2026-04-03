@@ -171,6 +171,7 @@ import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import userApi from '../api/user'
+import songApi from '../api/song'
 import { VideoPlay, Delete, Star } from '@element-plus/icons-vue'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
 
@@ -259,7 +260,22 @@ const loadFavorites = async () => {
   try {
     const res = await userApi.getFavorites(userStore.user.id)
     if (res.data.code === 200) {
-      favorites.value = res.data.data || []
+      const favoritesData = res.data.data || []
+      const songFavorites = favoritesData.filter(f => f.targetType === 1)
+      const songs = await Promise.all(
+        songFavorites.map(async (fav) => {
+          try {
+            const songRes = await songApi.getSongById(fav.targetId)
+            if (songRes.data.code === 200) {
+              return songRes.data.data
+            }
+          } catch (e) {
+            console.error('获取歌曲失败:', e)
+          }
+          return null
+        })
+      )
+      favorites.value = songs.filter(s => s !== null)
     }
   } catch (error) {
     console.error('获取收藏失败:', error)
