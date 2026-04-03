@@ -93,7 +93,7 @@
                 <el-button text type="primary" @click.stop="addToPlaylist(scope.row)">
                   <el-icon><Plus /></el-icon>
                 </el-button>
-                <el-button text type="primary" @click.stop="addToFavorite(scope.row)">
+                <el-button text :type="isFavorite(scope.row.id) ? 'warning' : 'primary'" @click.stop="addToFavorite(scope.row)">
                   <el-icon><Star /></el-icon>
                 </el-button>
               </div>
@@ -145,6 +145,7 @@ const pageSize = ref(10)
 const total = ref(0)
 const loading = ref(false)
 const songs = ref([])
+const favoriteSongIds = ref(new Set())
 const categoryTags = ref([])
 
 const selectedCategoryName = computed(() => {
@@ -193,6 +194,8 @@ const loadSongs = async () => {
       cover: song.cover || defaultCover,
       album: song.album?.title || '未知专辑'
     }))
+    
+    loadFavoriteStatus()
   } catch (error) {
     console.error('加载歌曲失败:', error)
     songs.value = []
@@ -261,6 +264,31 @@ const playSong = (song) => {
 const addToPlaylist = (song) => {
   playerStore.addToQueue(song)
   ElMessage.success('已添加到播放队列')
+}
+
+const loadFavoriteStatus = async () => {
+  if (!userStore.isLoggedIn) return
+  const token = localStorage.getItem('token')
+  if (!token) return
+  
+  try {
+    const songIds = songs.value.map(s => s.id).join(',')
+    if (!songIds) return
+    
+    const res = await fetch(`http://localhost:8080/api/favorites/check-batch?userId=${userStore.user.id}&targetType=1&songIds=${songIds}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200 && data.data) {
+      favoriteSongIds.value = new Set(Object.keys(data.data).filter(id => data.data[id]))
+    }
+  } catch (error) {
+    console.error('获取收藏状态失败:', error)
+  }
+}
+
+const isFavorite = (songId) => {
+  return favoriteSongIds.value.has(songId)
 }
 
 const addToFavorite = async (song) => {

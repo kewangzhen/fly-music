@@ -100,6 +100,25 @@ public class FavoriteController {
         boolean exists = favoriteRepository.existsByUserIdAndTargetTypeAndTargetId(userId, targetType, targetId);
         return ResponseEntity.ok(createSuccessResponse("检查成功", exists));
     }
+    
+    @GetMapping("/check-batch")
+    public ResponseEntity<Map<String, Object>> checkBatchFavorite(
+            @RequestParam Long userId,
+            @RequestParam Integer targetType,
+            @RequestParam String songIds) {
+        Map<Long, Boolean> result = new HashMap<>();
+        String[] ids = songIds.split(",");
+        for (String idStr : ids) {
+            try {
+                Long targetId = Long.parseLong(idStr.trim());
+                boolean exists = favoriteRepository.existsByUserIdAndTargetTypeAndTargetId(userId, targetType, targetId);
+                result.put(targetId, exists);
+            } catch (NumberFormatException e) {
+                // skip invalid id
+            }
+        }
+        return ResponseEntity.ok(createSuccessResponse("检查成功", result));
+    }
 
     @GetMapping("/user/{userId}/count")
     public ResponseEntity<Map<String, Object>> countUserFavorites(@PathVariable Long userId) {

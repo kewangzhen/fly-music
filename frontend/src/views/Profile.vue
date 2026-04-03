@@ -152,7 +152,7 @@
                 <el-button text @click="playSong(item.song)">
                   <el-icon><VideoPlay /></el-icon>
                 </el-button>
-                <el-button text @click="toggleHistoryFavorite(item.song)">
+                <el-button text :type="isHistoryFavorite(item.song?.id) ? 'warning' : ''" @click="toggleHistoryFavorite(item.song)">
                   <el-icon><Star /></el-icon>
                 </el-button>
               </div>
@@ -189,6 +189,7 @@ const historyLoading = ref(false)
 
 const favorites = ref([])
 const playHistory = ref([])
+const historyFavoriteIds = ref(new Set())
 
 const userForm = reactive({
   username: '',
@@ -296,6 +297,7 @@ const loadHistory = async () => {
     const data = await res.json()
     if (data.code === 200) {
       playHistory.value = data.data || []
+      loadHistoryFavoriteStatus()
     }
   } catch (error) {
     console.error('获取播放历史失败:', error)
@@ -351,6 +353,35 @@ const goToSongDetail = (id) => {
 const toggleHistoryFavorite = async (song) => {
   if (!song?.id) return
   await playerStore.toggleFavorite(song.id)
+  loadHistoryFavoriteStatus()
+}
+
+const loadHistoryFavoriteStatus = async () => {
+  if (!userStore.isLoggedIn || !userStore.user?.id) return
+  const token = localStorage.getItem('token')
+  if (!token) return
+  
+  try {
+    const songIds = playHistory.value
+      .map(item => item.song?.id)
+      .filter(id => id)
+      .join(',')
+    if (!songIds) return
+    
+    const res = await fetch(`http://localhost:8080/api/favorites/check-batch?userId=${userStore.user.id}&targetType=1&songIds=${songIds}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200 && data.data) {
+      historyFavoriteIds.value = new Set(Object.keys(data.data).filter(id => data.data[id]))
+    }
+  } catch (error) {
+    console.error('获取历史收藏状态失败:', error)
+  }
+}
+
+const isHistoryFavorite = (songId) => {
+  return historyFavoriteIds.value.has(songId)
 }
 
 onMounted(async () => {
