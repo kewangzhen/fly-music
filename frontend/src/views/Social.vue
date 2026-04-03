@@ -210,6 +210,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
+import { ElMessage } from 'element-plus'
 import { Edit, Star, ChatDotRound, Share, Picture, Headset, Location, More, VideoPlay } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -229,10 +230,34 @@ const currentUser = ref({
   username: '音乐爱好者',
   avatar: DEFAULT_IMAGES.avatar,
   bio: '热爱音乐，分享好歌',
-  followers: 128,
-  following: 256,
-  posts: 42
+  followers: 0,
+  following: 0,
+  posts: 0
 })
+
+const loadCurrentUserStats = async () => {
+  if (!userStore.user?.id) return
+  const token = localStorage.getItem('token')
+  try {
+    const [followersRes, followingRes, postsRes] = await Promise.all([
+      fetch(`http://localhost:8080/api/social/followers/${userStore.user.id}/count`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`http://localhost:8080/api/social/following/${userStore.user.id}/count`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`http://localhost:8080/api/social/post/user/${userStore.user.id}`, { headers: { Authorization: `Bearer ${token}` } })
+    ])
+    const followersData = await followersRes.json()
+    const followingData = await followingRes.json()
+    const postsData = await postsRes.json()
+    
+    currentUser.value.followers = followersData.data?.count || 0
+    currentUser.value.following = followingData.data?.count || 0
+    currentUser.value.posts = postsData.data?.length || 0
+    currentUser.value.username = userStore.user.username
+    currentUser.value.avatar = userStore.user.avatar
+    currentUser.value.bio = userStore.user.description || '热爱音乐，分享好歌'
+  } catch (error) {
+    console.error('加载用户数据失败:', error)
+  }
+}
 
 const recommendedUsers = ref([
   { id: 1, username: '周杰伦', avatar: DEFAULT_IMAGES.avatar, followers: 10000 },
@@ -254,45 +279,34 @@ const songOptions = ref([
   { id: 3, title: '晴天', artist: '周杰伦', cover: DEFAULT_IMAGES.cover }
 ])
 
-const posts = ref([
-  {
-    id: 1,
-    user: { username: '音乐达人', avatar: DEFAULT_IMAGES.avatar },
-    content: '今天听了一首很好听的歌，分享给大家！新专辑太棒了！',
-    song: { id: 1, title: '孤勇者', artist: '陈奕迅', cover: DEFAULT_IMAGES.cover },
-    likes: 128,
-    isLiked: false,
-    comments: [
-      { id: 1, user: { username: '小明', avatar: DEFAULT_IMAGES.avatar }, content: '确实很好听！', createdAt: new Date(Date.now() - 3600000) },
-      { id: 2, user: { username: '小红', avatar: DEFAULT_IMAGES.avatar }, content: '我也喜欢这首歌', createdAt: new Date(Date.now() - 1800000) }
-    ],
-    showComments: false,
-    createdAt: new Date(Date.now() - 7200000)
-  },
-  {
-    id: 2,
-    user: { username: '歌单收藏家', avatar: DEFAULT_IMAGES.avatar },
-    content: '推荐一个很棒的歌单，都是我喜欢的类型，每一首都是精品！',
-    song: { id: 2, title: '起风了', artist: '买辣椒也用券', cover: DEFAULT_IMAGES.cover },
-    likes: 86,
-    isLiked: true,
-    comments: [],
-    showComments: false,
-    createdAt: new Date(Date.now() - 14400000)
-  },
-  {
-    id: 3,
-    user: { username: 'AI音乐爱好者', avatar: DEFAULT_IMAGES.avatar },
-    content: '刚刚体验了AI音乐实验室，功能太强大了！可以自己创作音乐，真的太酷了！',
-    likes: 256,
-    isLiked: false,
-    comments: [
-      { id: 3, user: { username: '科技控', avatar: DEFAULT_IMAGES.avatar }, content: '真的假的？求链接', createdAt: new Date(Date.now() - 3600000) }
-    ],
-    showComments: false,
-    createdAt: new Date(Date.now() - 28800000)
+const posts = ref([])
+
+const loadPosts = async () => {
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('http://localhost:8080/api/social/post/all?page=0&size=20', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      const postList = data.data?.posts || []
+      for (const post of postList) {
+        post.showComments = false
+        if (userStore.user?.id) {
+          const likeRes = await fetch(`http://localhost:8080/api/social/post/${post.id}/like/status?userId=${userStore.user.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          const likeData = await likeRes.json()
+          post.isLiked = likeData.data?.liked || false
+          post.likes = likeData.data?.likes || post.likes
+        }
+      }
+      posts.value = postList
+    }
+  } catch (error) {
+    console.error('加载动态失败:', error)
   }
-])
+}
 
 const formatDate = (date) => {
   const now = new Date()
@@ -309,54 +323,155 @@ const formatDate = (date) => {
 }
 
 const showPostDialog = () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
   postDialogVisible.value = true
 }
 
-const submitPost = () => {
-  if (!postForm.content) return
+const submitPost = async () => {
+  if (!postForm.content || !userStore.user?.id) return
   
-  const selectedSong = songOptions.value.find(s => s.id === postForm.songId)
-  posts.value.unshift({
-    id: posts.value.length + 1,
-    user: { username: currentUser.value.username, avatar: currentUser.value.avatar },
-    content: postForm.content,
-    song: selectedSong || null,
-    likes: 0,
-    isLiked: false,
-    comments: [],
-    showComments: false,
-    createdAt: new Date()
-  })
-  
-  postDialogVisible.value = false
-  postForm.content = ''
-  postForm.songId = null
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('http://localhost:8080/api/social/post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        userId: userStore.user.id,
+        content: postForm.content,
+        songId: postForm.songId
+      })
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success('发布成功')
+      postDialogVisible.value = false
+      postForm.content = ''
+      postForm.songId = null
+      loadPosts()
+    } else {
+      ElMessage.error(data.message || '发布失败')
+    }
+  } catch (error) {
+    ElMessage.error('发布失败')
+  }
 }
 
-const likePost = (post) => {
-  post.isLiked = !post.isLiked
-  post.likes += post.isLiked ? 1 : -1
+const likePost = async (post) => {
+  if (!userStore.user?.id) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  
+  const token = localStorage.getItem('token')
+  try {
+    if (post.isLiked) {
+      await fetch(`http://localhost:8080/api/social/post/${post.id}/like?userId=${userStore.user.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      post.isLiked = false
+      post.likes = Math.max(0, post.likes - 1)
+    } else {
+      await fetch(`http://localhost:8080/api/social/post/${post.id}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: userStore.user.id })
+      })
+      post.isLiked = true
+      post.likes = (post.likes || 0) + 1
+    }
+  } catch (error) {
+    ElMessage.error('操作失败')
+  }
 }
 
-const showComments = (post) => {
+const showComments = async (post) => {
   post.showComments = !post.showComments
+  if (post.showComments && (!post.comments || post.comments.length === 0)) {
+    const token = localStorage.getItem('token')
+    try {
+      const res = await fetch(`http://localhost:8080/api/social/post/${post.id}/comments`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (data.code === 200) {
+        post.comments = data.data || []
+      }
+    } catch (error) {
+      console.error('加载评论失败:', error)
+    }
+  }
 }
 
-const submitComment = (post) => {
+const submitComment = async (post) => {
   const content = commentInputs.value[post.id]
-  if (!content) return
+  if (!content || !userStore.user?.id) return
   
-  post.comments.push({
-    id: post.comments.length + 1,
-    user: { username: currentUser.value.username, avatar: currentUser.value.avatar },
-    content,
-    createdAt: new Date()
-  })
-  commentInputs.value[post.id] = ''
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch(`http://localhost:8080/api/social/post/${post.id}/comment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        userId: userStore.user.id,
+        content: content
+      })
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      if (!post.comments) post.comments = []
+      post.comments.push(data.data)
+      post.commentsCount = (post.commentsCount || 0) + 1
+      commentInputs.value[post.id] = ''
+      ElMessage.success('评论成功')
+    }
+  } catch (error) {
+    ElMessage.error('评论失败')
+  }
 }
 
-const followUser = (user) => {
-  console.log('关注用户:', user.username)
+const followUser = async (user) => {
+  if (!userStore.user?.id) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('http://localhost:8080/api/social/follow', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        followerId: userStore.user.id,
+        followedId: user.id
+      })
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success('关注成功')
+      user.isFollowing = true
+      user.followers = (user.followers || 0) + 1
+    } else {
+      ElMessage.error(data.message || '关注失败')
+    }
+  } catch (error) {
+    ElMessage.error('关注失败')
+  }
 }
 
 const playSong = (song) => {
@@ -370,6 +485,8 @@ const handleLogout = () => {
 
 onMounted(() => {
   userStore.init()
+  loadCurrentUserStats()
+  loadPosts()
 })
 </script>
 

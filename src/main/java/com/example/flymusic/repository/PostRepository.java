@@ -28,6 +28,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByStatus(Integer status);
     
     /**
+     * 查询所有动态按时间倒序
+     */
+    List<Post> findByStatusOrderByCreatedAtDesc(Integer status);
+    
+    /**
      * 查询关注用户的动态
      */
     @Query("SELECT p FROM Post p WHERE p.user.id IN " +
