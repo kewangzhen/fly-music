@@ -20,6 +20,10 @@
                   <span class="stat-label">关注</span>
                 </div>
                 <div class="stat-item">
+                  <span class="stat-value">{{ currentUser.artistFollowing }}</span>
+                  <span class="stat-label">关注歌手</span>
+                </div>
+                <div class="stat-item">
                   <span class="stat-value">{{ currentUser.posts }}</span>
                   <span class="stat-label">动态</span>
                 </div>
@@ -249,6 +253,7 @@ const currentUser = ref({
   bio: '热爱音乐，分享好歌',
   followers: 0,
   following: 0,
+  artistFollowing: 0,
   posts: 0
 })
 
@@ -256,18 +261,21 @@ const loadCurrentUserStats = async () => {
   if (!userStore.user?.id) return
   const token = localStorage.getItem('token')
   try {
-    const [followersRes, followingRes, postsRes] = await Promise.all([
+    const [followersRes, followingRes, postsRes, artistFollowingRes] = await Promise.all([
       fetch(`http://localhost:8080/api/social/followers/${userStore.user.id}/count`, { headers: { Authorization: `Bearer ${token}` } }),
       fetch(`http://localhost:8080/api/social/following/${userStore.user.id}/count`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`http://localhost:8080/api/social/post/user/${userStore.user.id}`, { headers: { Authorization: `Bearer ${token}` } })
+      fetch(`http://localhost:8080/api/social/post/user/${userStore.user.id}`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`http://localhost:8080/api/social/artist/following/${userStore.user.id}/count`, { headers: { Authorization: `Bearer ${token}` } })
     ])
     const followersData = await followersRes.json()
     const followingData = await followingRes.json()
     const postsData = await postsRes.json()
+    const artistFollowingData = await artistFollowingRes.json()
     
     currentUser.value.followers = followersData.data?.count || 0
     currentUser.value.following = followingData.data?.count || 0
     currentUser.value.posts = postsData.data?.length || 0
+    currentUser.value.artistFollowing = artistFollowingData.data?.count || 0
     currentUser.value.username = userStore.user.username
     currentUser.value.avatar = userStore.user.avatar
     currentUser.value.bio = userStore.user.description || '热爱音乐，分享好歌'
