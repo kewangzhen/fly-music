@@ -207,6 +207,64 @@
           </div>
         </div>
       </el-tab-pane>
+      
+      <el-tab-pane label="听歌报告" name="report">
+        <div class="tab-content">
+          <div v-if="reportLoading" class="loading">加载中...</div>
+          <div v-else class="report-content">
+            <div class="report-header">
+              <h3>我的听歌报告</h3>
+              <p class="report-desc">记录你的音乐品味</p>
+            </div>
+            
+            <div class="report-cards">
+              <div class="report-card">
+                <div class="card-icon">🎵</div>
+                <div class="card-value">{{ listeningReport.totalPlayCount || 0 }}</div>
+                <div class="card-label">累计播放</div>
+              </div>
+              <div class="report-card">
+                <div class="card-icon">⏱️</div>
+                <div class="card-value">{{ listeningReport.totalListenMinutes || 0 }}</div>
+                <div class="card-label">听歌时长(分钟)</div>
+              </div>
+              <div class="report-card">
+                <div class="card-icon">🎶</div>
+                <div class="card-value">{{ listeningReport.uniqueSongCount || 0 }}</div>
+                <div class="card-label">播放歌曲数</div>
+              </div>
+              <div class="report-card">
+                <div class="card-icon">📅</div>
+                <div class="card-value">{{ listeningReport.weekPlayCount || 0 }}</div>
+                <div class="card-label">本周播放</div>
+              </div>
+            </div>
+            
+            <div class="top-songs-section" v-if="listeningReport.topSongs?.length > 0">
+              <h4>我的Top10歌曲</h4>
+              <div class="top-songs-list">
+                <div 
+                  v-for="(song, index) in listeningReport.topSongs" 
+                  :key="song.id"
+                  class="top-song-item"
+                  @click="playSong(song)"
+                >
+                  <span class="rank" :class="{ 'top-three': index < 3 }">{{ index + 1 }}</span>
+                  <img :src="song.cover || defaultCover" class="song-cover" />
+                  <div class="song-info">
+                    <div class="song-title">{{ song.title }}</div>
+                    <div class="play-count">播放 {{ song.playCount }} 次</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div v-else class="empty-report">
+              <p>暂无听歌数据</p>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
     
     <el-dialog v-model="showUploadDialog" title="上传音乐" width="500px">
@@ -261,6 +319,8 @@ watch(activeTab, (newTab) => {
     loadHistory()
   } else if (newTab === 'uploads') {
     loadMyUploads()
+  } else if (newTab === 'report') {
+    loadListeningReport()
   }
 })
 
@@ -275,6 +335,8 @@ const historyFavoriteIds = ref(new Set())
 const myUploads = ref([])
 const uploadsLoading = ref(false)
 const showUploadDialog = ref(false)
+const listeningReport = ref({})
+const reportLoading = ref(false)
 
 const songUploadUrl = 'http://localhost:8080/api/user/songs/upload'
 const songUploadHeaders = {
@@ -561,6 +623,25 @@ const beforeUpload = (file) => {
   return true
 }
 
+const loadListeningReport = async () => {
+  if (!userStore.user?.id) return
+  reportLoading.value = true
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(`http://localhost:8080/api/user/report/listening?userId=${userStore.user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      listeningReport.value = data.data || {}
+    }
+  } catch (error) {
+    console.error('获取听歌报告失败:', error)
+  } finally {
+    reportLoading.value = false
+  }
+}
+
 onMounted(async () => {
   if (!userStore.user || !userStore.user.id) {
     await userStore.getUserProfile()
@@ -779,5 +860,116 @@ const updateProfile = async () => {
 
 .song-status {
   margin-top: 4px;
+}
+
+.report-content {
+  padding: 20px 0;
+}
+
+.report-header {
+  margin-bottom: 30px;
+}
+
+.report-header h3 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.report-desc {
+  color: #999;
+}
+
+.report-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.report-card {
+  background: #f5f7fa;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.card-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.card-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.top-songs-section h4 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.top-songs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.top-song-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.top-song-item:hover {
+  background: #f5f7fa;
+}
+
+.rank {
+  font-size: 18px;
+  font-weight: bold;
+  color: #999;
+  width: 30px;
+}
+
+.rank.top-three {
+  color: #f5a623;
+}
+
+.top-song-item .song-cover {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.top-song-item .song-info {
+  flex: 1;
+}
+
+.top-song-item .song-title {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.top-song-item .play-count {
+  font-size: 12px;
+  color: #999;
+}
+
+.empty-report {
+  text-align: center;
+  padding: 40px;
+  color: #999;
 }
 </style>
