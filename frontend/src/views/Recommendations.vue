@@ -83,12 +83,12 @@
           </div>
         </el-tab-pane>
         
-        <el-tab-pane label="相似推荐" name="similar">
+        <el-tab-pane label="分类推荐" name="similar">
           <div class="recommendation-section">
             <div class="section-header">
               <div class="section-title-wrapper">
-                <span class="section-icon similar">🎯</span>
-                <h2>相似推荐</h2>
+                <span class="section-icon similar">🎵</span>
+                <h2>分类推荐</h2>
               </div>
             </div>
             <div class="recommendation-grid">
