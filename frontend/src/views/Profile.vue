@@ -165,7 +165,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
@@ -182,6 +182,15 @@ const playerStore = usePlayerStore()
 const defaultCover = DEFAULT_IMAGES.cover
 
 const activeTab = ref('profile')
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'favorites') {
+    loadFavorites()
+  } else if (newTab === 'history') {
+    loadHistory()
+  }
+})
+
 const loading = ref(false)
 const pageLoading = ref(true)
 const favoritesLoading = ref(false)
