@@ -158,16 +158,24 @@
           <el-card class="trending-card">
             <template #header>
               <div class="card-header">
-                <span>热门话题</span>
+                <span>推荐关注</span>
               </div>
             </template>
             <div class="trending-list">
-              <div v-for="topic in trendingTopics" :key="topic.id" class="trending-item">
-                <span class="topic-rank">{{ topic.rank }}</span>
+              <div v-for="user in recommendedUsers" :key="user.id" class="trending-item">
+                <el-avatar :size="36" :src="user.avatar">{{ user.username?.charAt(0) }}</el-avatar>
                 <div class="topic-info">
-                  <span class="topic-name">#{{ topic.name }}</span>
-                  <span class="topic-posts">{{ topic.posts }} 帖子</span>
+                  <span class="topic-name">{{ user.nickname || user.username }}</span>
+                  <span class="topic-posts">{{ user.followers || 0 }} 粉丝</span>
                 </div>
+                <el-button 
+                  size="small" 
+                  round 
+                  :type="user.isFollowing ? 'default' : 'primary'"
+                  @click="handleFollow(user)"
+                >
+                  {{ user.isFollowing ? '已关注' : '关注' }}
+                </el-button>
               </div>
             </div>
           </el-card>
