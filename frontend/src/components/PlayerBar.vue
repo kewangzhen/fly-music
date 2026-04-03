@@ -336,9 +336,10 @@ const toggleQueueFavorite = async (song) => {
 }
 
 .player-right {
-  width: 100px;
+  width: 180px;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .playlist-btn {
