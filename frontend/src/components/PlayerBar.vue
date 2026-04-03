@@ -53,16 +53,19 @@
     </div>
 
     <div class="player-right">
-      <el-popover placement="top" :width="200" trigger="click">
-        <template #reference>
-          <el-button circle size="small" @click="handleToggleMute" class="volume-btn">
-            <el-icon><component :is="playerStore.volume === 0 ? 'Close' : 'Bell'" /></el-icon>
-          </el-button>
-        </template>
-        <div class="volume-control">
-          <el-slider v-model="playerStore.volume" :min="0" :max="1" :step="0.01" @change="handleVolumeChange" />
-        </div>
-      </el-popover>
+      <div class="volume-section">
+        <el-button circle size="small" @click="handleToggleMute" class="volume-btn">
+          <el-icon><component :is="playerStore.volume === 0 ? 'Close' : 'Bell'" /></el-icon>
+        </el-button>
+        <el-slider
+          class="volume-slider"
+          v-model="playerStore.volume"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="handleVolumeChange"
+        />
+      </div>
       <el-button circle size="small" @click="handleToggleFavorite" class="favorite-btn" :class="{ 'is-favorited': playerStore.currentSongFavorite }">
         <el-icon><Star /></el-icon>
       </el-button>
@@ -336,10 +339,33 @@ const toggleQueueFavorite = async (song) => {
 }
 
 .player-right {
-  width: 180px;
+  width: 200px;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+  align-items: center;
+}
+
+.volume-section {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.volume-slider {
+  width: 80px;
+}
+
+.volume-slider :deep(.el-slider__runway) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.volume-slider :deep(.el-slider__bar) {
+  background: #409eff;
+}
+
+.volume-slider :deep(.el-slider__button) {
+  border-color: #409eff;
 }
 
 .playlist-btn {
@@ -361,10 +387,6 @@ const toggleQueueFavorite = async (song) => {
 
 .volume-btn:hover {
   color: #fff;
-}
-
-.volume-control {
-  padding: 10px;
 }
 
 .favorite-btn {
