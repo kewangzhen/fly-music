@@ -35,12 +35,19 @@
             </template>
             <div class="recommend-list">
               <div v-for="user in recommendedUsers" :key="user.id" class="recommend-item">
-                <el-avatar :size="40" :src="user.avatar">{{ user.username.charAt(0) }}</el-avatar>
+                <el-avatar :size="40" :src="user.avatar">{{ user.username?.charAt(0) }}</el-avatar>
                 <div class="recommend-info">
                   <span class="recommend-name">{{ user.username }}</span>
-                  <span class="recommend-fans">{{ user.followers }} 粉丝</span>
+                  <span class="recommend-fans">{{ user.followers || 0 }} 粉丝</span>
                 </div>
-                <el-button size="small" round @click="followUser(user)">关注</el-button>
+                <el-button 
+                  size="small" 
+                  round 
+                  :type="user.isFollowing ? 'default' : 'primary'" 
+                  @click="handleFollow(user)"
+                >
+                  {{ user.isFollowing ? '取消关注' : '关注' }}
+                </el-button>
               </div>
             </div>
           </el-card>
@@ -259,6 +266,30 @@ const loadCurrentUserStats = async () => {
   }
 }
 
+const loadRecommendedUsers = async () => {
+  if (!userStore.user?.id) return
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('http://localhost:8080/api/users', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      const users = (data.data || []).filter(u => u.id !== userStore.user.id).slice(0, 10)
+      for (const user of users) {
+        const followRes = await fetch(`http://localhost:8080/api/social/check-follow?followerId=${userStore.user.id}&followedId=${user.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const followData = await followRes.json()
+        user.isFollowing = followData.data?.following || false
+      }
+      recommendedUsers.value = users
+    }
+  } catch (error) {
+    console.error('加载推荐用户失败:', error)
+  }
+}
+
 const recommendedUsers = ref([
   { id: 1, username: '周杰伦', avatar: DEFAULT_IMAGES.avatar, followers: 10000 },
   { id: 2, username: '林俊杰', avatar: DEFAULT_IMAGES.avatar, followers: 8000 },
@@ -450,28 +481,49 @@ const followUser = async (user) => {
   
   const token = localStorage.getItem('token')
   try {
-    const res = await fetch('http://localhost:8080/api/social/follow', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        followerId: userStore.user.id,
-        followedId: user.id
+    if (user.isFollowing) {
+      await fetch('http://localhost:8080/api/social/follow', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          followerId: userStore.user.id,
+          followedId: user.id
+        })
       })
-    })
-    const data = await res.json()
-    if (data.code === 200) {
-      ElMessage.success('关注成功')
-      user.isFollowing = true
-      user.followers = (user.followers || 0) + 1
+      ElMessage.success('取消关注成功')
+      user.isFollowing = false
+      user.followers = Math.max(0, (user.followers || 1) - 1)
     } else {
-      ElMessage.error(data.message || '关注失败')
+      const res = await fetch('http://localhost:8080/api/social/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          followerId: userStore.user.id,
+          followedId: user.id
+        })
+      })
+      const data = await res.json()
+      if (data.code === 200) {
+        ElMessage.success('关注成功')
+        user.isFollowing = true
+        user.followers = (user.followers || 0) + 1
+      } else {
+        ElMessage.error(data.message || '关注失败')
+      }
     }
   } catch (error) {
-    ElMessage.error('关注失败')
+    ElMessage.error('操作失败')
   }
+}
+
+const handleFollow = (user) => {
+  followUser(user)
 }
 
 const playSong = (song) => {
@@ -487,6 +539,7 @@ onMounted(() => {
   userStore.init()
   loadCurrentUserStats()
   loadPosts()
+  loadRecommendedUsers()
 })
 </script>
 
