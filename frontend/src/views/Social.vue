@@ -17,7 +17,7 @@
                 </div>
                 <div class="stat-item">
                   <span class="stat-value">{{ currentUser.following }}</span>
-                  <span class="stat-label">关注</span>
+                  <span class="stat-label">关注用户</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-value">{{ currentUser.artistFollowing }}</span>
