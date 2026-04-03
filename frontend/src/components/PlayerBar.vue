@@ -104,9 +104,9 @@
               </div>
             </div>
             <div class="item-actions">
-              <el-icon class="action-btn" @click.stop="playNextSong(song)"><DArrowRight /></el-icon>
-              <el-icon class="action-btn" :class="{ favorited: isSongFavorited(song.id) }" @click.stop="toggleQueueFavorite(song)"><Star /></el-icon>
-              <el-icon class="action-btn remove" @click.stop="removeFromList(index)"><Close /></el-icon>
+              <el-icon class="action-btn" :size="20" @click.stop="playNextSong(song)"><DArrowRight /></el-icon>
+              <el-icon class="action-btn" :size="20" :class="{ favorited: isSongFavorited(song.id) }" @click.stop="toggleQueueFavorite(song)"><Star /></el-icon>
+              <el-icon class="action-btn remove" :size="20" @click.stop="removeFromList(index)"><Close /></el-icon>
             </div>
           </div>
           <el-empty v-if="!playerStore.playlist.length" description="播放列表为空" />
@@ -491,7 +491,7 @@ const toggleQueueFavorite = async (song) => {
   color: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
   transition: all 0.2s;
-  font-size: 18px;
+  font-size: 20px !important;
 }
 
 .action-btn:hover {
