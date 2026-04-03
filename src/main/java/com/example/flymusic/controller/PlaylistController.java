@@ -2,6 +2,8 @@ package com.example.flymusic.controller;
 
 import com.example.flymusic.entity.Playlist;
 import com.example.flymusic.entity.Song;
+import com.example.flymusic.entity.User;
+import com.example.flymusic.repository.UserRepository;
 import com.example.flymusic.service.PlaylistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 播放列表Controller
@@ -22,6 +25,9 @@ public class PlaylistController {
 
     @Autowired
     private PlaylistService playlistService;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * 获取所有播放列表
@@ -48,11 +54,30 @@ public class PlaylistController {
      * 创建播放列表
      */
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createPlaylist(@RequestBody Playlist playlist) {
+    public ResponseEntity<Map<String, Object>> createPlaylist(@RequestBody Map<String, Object> data) {
         try {
+            Playlist playlist = new Playlist();
+            if (data.get("name") != null) {
+                playlist.setName(data.get("name").toString());
+            }
+            if (data.get("description") != null) {
+                playlist.setDescription(data.get("description").toString());
+            }
+            if (data.get("cover") != null) {
+                playlist.setCover(data.get("cover").toString());
+            }
+            if (data.get("userId") != null) {
+                Long userId = Long.valueOf(data.get("userId").toString());
+                Optional<User> userOpt = userRepository.findById(userId);
+                if (userOpt.isPresent()) {
+                    playlist.setUser(userOpt.get());
+                }
+            }
+            
             Playlist createdPlaylist = playlistService.createPlaylist(playlist);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSuccessResponse("创建成功", createdPlaylist));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
         }
     }
