@@ -7,6 +7,45 @@
       </div>
 
       <el-tabs v-model="activeTab" class="recommendation-tabs">
+        <el-tab-pane label="心动歌单" name="heartbeat">
+          <div class="recommendation-section">
+            <div class="section-header">
+              <div class="section-title-wrapper">
+                <span class="section-icon heartbeat">💕</span>
+                <h2>心动歌单</h2>
+              </div>
+              <el-button type="primary" round @click="playAllHeartbeat">
+                <el-icon><VideoPlay /></el-icon> 播放全部
+              </el-button>
+            </div>
+            <div class="recommendation-grid">
+              <div 
+                v-for="(song, index) in heartbeatSongs" 
+                :key="song.id" 
+                class="recommend-card"
+                :style="{ animationDelay: `${index * 0.05}s` }"
+                @click="playSong(song)"
+              >
+                <div class="card-cover">
+                  <img :src="song.cover" :alt="song.title">
+                  <div class="card-overlay">
+                    <el-button circle size="large" type="primary">
+                      <el-icon size="20"><VideoPlay /></el-icon>
+                    </el-button>
+                  </div>
+                </div>
+                <div class="card-info">
+                  <h4 class="card-title">{{ song.title }}</h4>
+                  <p class="card-subtitle">{{ song.artist }}</p>
+                </div>
+              </div>
+            </div>
+            <div v-if="heartbeatSongs.length === 0 && !heartbeatLoading" class="empty-state">
+              <p>暂无心动歌曲</p>
+            </div>
+          </div>
+        </el-tab-pane>
+        
         <el-tab-pane label="每日推荐" name="daily">
           <div class="recommendation-section">
             <div class="section-header">
@@ -146,7 +185,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
@@ -157,8 +196,10 @@ const router = useRouter()
 const userStore = useUserStore()
 const playerStore = usePlayerStore()
 const activeIndex = ref('4')
-const activeTab = ref('daily')
+const activeTab = ref('heartbeat')
 const defaultAvatar = DEFAULT_IMAGES.avatar
+const heartbeatSongs = ref([])
+const heartbeatLoading = ref(false)
 
 const dailyRecommendations = ref([
   { id: 1, title: '孤勇者', artist: '陈奕迅', cover: DEFAULT_IMAGES.cover },
@@ -210,6 +251,30 @@ const playSong = (song) => {
   playerStore.playSong(song)
 }
 
+const loadHeartbeatSongs = async () => {
+  heartbeatLoading.value = true
+  try {
+    const res = await fetch('http://localhost:8080/api/songs/heartbeat', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      heartbeatSongs.value = data.data || []
+    }
+  } catch (error) {
+    console.error('获取心动歌曲失败:', error)
+  } finally {
+    heartbeatLoading.value = false
+  }
+}
+
+const playAllHeartbeat = () => {
+  if (heartbeatSongs.value.length > 0) {
+    playerStore.setPlaylist(heartbeatSongs.value)
+    playerStore.playSong(heartbeatSongs.value[0])
+  }
+}
+
 const handleLogout = () => {
   userStore.logout()
   router.push('/login')
@@ -217,6 +282,13 @@ const handleLogout = () => {
 
 onMounted(() => {
   userStore.init()
+  loadHeartbeatSongs()
+})
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'heartbeat') {
+    loadHeartbeatSongs()
+  }
 })
 </script>
 
@@ -346,6 +418,12 @@ onMounted(() => {
 
 .section-icon.daily {
   background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-icon.heartbeat {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
