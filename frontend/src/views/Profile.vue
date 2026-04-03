@@ -160,7 +160,78 @@
           </div>
         </div>
       </el-tab-pane>
+      
+      <el-tab-pane label="我的上传" name="uploads">
+        <div class="tab-content">
+          <div class="tab-header">
+            <h3>我的上传</h3>
+            <el-button type="primary" @click="showUploadDialog = true">
+              上传音乐
+            </el-button>
+          </div>
+          <div v-if="uploadsLoading" class="loading">加载中...</div>
+          <div v-else-if="myUploads.length === 0" class="empty">
+            <el-empty description="暂无上传" />
+          </div>
+          <div v-else class="songs-list">
+            <div 
+              v-for="(song, index) in myUploads" 
+              :key="song.id"
+              class="song-item"
+            >
+              <span class="song-index">{{ index + 1 }}</span>
+              <img :src="song.cover || defaultCover" class="song-cover" @click="playSong(song)" />
+              <div class="song-info" @click="goToSongDetail(song.id)">
+                <div class="song-title">{{ song.title }}</div>
+                <div class="song-artist">
+                  {{ song.artists?.map(a => a.name).join(', ') || '未知歌手' }}
+                </div>
+                <div class="song-status">
+                  <el-tag :type="song.status === 1 ? 'success' : 'info'" size="small">
+                    {{ song.status === 1 ? '已上架' : '已下架' }}
+                  </el-tag>
+                </div>
+              </div>
+              <div class="song-actions">
+                <el-button text @click="playSong(song)">
+                  <el-icon><VideoPlay /></el-icon>
+                </el-button>
+                <el-button text :type="song.status === 1 ? 'info' : 'success'" @click="toggleUploadStatus(song)">
+                  {{ song.status === 1 ? '下架' : '上架' }}
+                </el-button>
+                <el-button text type="danger" @click="deleteUpload(song.id)">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
     </el-tabs>
+    
+    <el-dialog v-model="showUploadDialog" title="上传音乐" width="500px">
+      <el-upload
+        class="upload-demo"
+        drag
+        :action="uploadUrl"
+        :headers="uploadHeaders"
+        :data="uploadData"
+        :on-success="handleUploadSuccess"
+        :on-error="handleUploadError"
+        :before-upload="beforeUpload"
+        accept=".mp3"
+      >
+        <el-icon class="el-icon--upload"><Upload /></el-icon>
+        <div class="el-upload__text">
+          拖拽文件到此处或<em>点击上传</em>
+        </div>
+        <template #tip>
+          <div class="el-upload__tip">
+            支持MP3文件，将自动从文件中提取歌曲信息
+          </div>
+        </template>
+      </el-upload>
+    </el-dialog>
   </div>
 </template>
 
@@ -172,7 +243,7 @@ import { usePlayerStore } from '../store/player'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import userApi from '../api/user'
 import songApi from '../api/song'
-import { VideoPlay, Delete, Star } from '@element-plus/icons-vue'
+import { VideoPlay, Delete, Star, Upload } from '@element-plus/icons-vue'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
 
 const router = useRouter()
@@ -188,6 +259,8 @@ watch(activeTab, (newTab) => {
     loadFavorites()
   } else if (newTab === 'history') {
     loadHistory()
+  } else if (newTab === 'uploads') {
+    loadMyUploads()
   }
 })
 
@@ -199,6 +272,17 @@ const historyLoading = ref(false)
 const favorites = ref([])
 const playHistory = ref([])
 const historyFavoriteIds = ref(new Set())
+const myUploads = ref([])
+const uploadsLoading = ref(false)
+const showUploadDialog = ref(false)
+
+const uploadUrl = 'http://localhost:8080/api/user/songs/upload'
+const uploadHeaders = {
+  Authorization: `Bearer ${localStorage.getItem('token')}`
+}
+const uploadData = computed(() => ({
+  userId: userStore.user?.id
+}))
 
 const userForm = reactive({
   username: '',
@@ -384,6 +468,97 @@ const loadHistoryFavoriteStatus = async () => {
 
 const isHistoryFavorite = (songId) => {
   return historyFavoriteIds.value.has(songId)
+}
+
+const loadMyUploads = async () => {
+  if (!userStore.user?.id) return
+  uploadsLoading.value = true
+  try {
+    const token = localStorage.getItem('token')
+    const res = await fetch(`http://localhost:8080/api/user/songs/my-uploads?userId=${userStore.user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      myUploads.value = data.data || []
+    }
+  } catch (error) {
+    console.error('获取上传失败:', error)
+  } finally {
+    uploadsLoading.value = false
+  }
+}
+
+const toggleUploadStatus = async (song) => {
+  const token = localStorage.getItem('token')
+  const url = song.status === 1 
+    ? `http://localhost:8080/api/user/songs/${song.id}/offline?userId=${userStore.user.id}`
+    : `http://localhost:8080/api/user/songs/${song.id}/online?userId=${userStore.user.id}`
+  
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success(song.status === 1 ? '已下架' : '已上架')
+      song.status = song.status === 1 ? 0 : 1
+    }
+  } catch (error) {
+    ElMessage.error('操作失败')
+  }
+}
+
+const deleteUpload = async (songId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这首歌曲吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    const token = localStorage.getItem('token')
+    const res = await fetch(`http://localhost:8080/api/user/songs/${songId}?userId=${userStore.user.id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      ElMessage.success('删除成功')
+      myUploads.value = myUploads.value.filter(s => s.id !== songId)
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
+  }
+}
+
+const handleUploadSuccess = (response) => {
+  if (response.code === 200) {
+    ElMessage.success('上传成功')
+    showUploadDialog.value = false
+    loadMyUploads()
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
+const handleUploadError = () => {
+  ElMessage.error('上传失败')
+}
+
+const beforeUpload = (file) => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return false
+  }
+  if (!file.name.toLowerCase().endsWith('.mp3')) {
+    ElMessage.error('只能上传MP3文件')
+    return false
+  }
+  return true
 }
 
 onMounted(async () => {
@@ -600,5 +775,9 @@ const updateProfile = async () => {
 .song-actions {
   display: flex;
   gap: 5px;
+}
+
+.song-status {
+  margin-top: 4px;
 }
 </style>

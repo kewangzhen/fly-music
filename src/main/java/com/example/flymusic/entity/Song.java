@@ -69,6 +69,9 @@ public class Song {
     @Column(name = "user_id")
     private Long userId;
     
+    @Column(name = "user_upload", columnDefinition = "TINYINT DEFAULT 0")
+    private Integer userUpload;
+    
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Date createdAt;
     

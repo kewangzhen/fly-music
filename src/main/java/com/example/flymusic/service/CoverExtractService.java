@@ -133,4 +133,20 @@ public class CoverExtractService {
     public String getCoverPath() {
         return coversPath;
     }
+
+    public Integer getMp3Duration(String mp3FilePath) {
+        try {
+            File mp3File = new File(mp3FilePath);
+            if (!mp3File.exists()) {
+                return null;
+            }
+            AudioFile audioFile = AudioFileIO.read(mp3File);
+            if (audioFile != null && audioFile.getAudioHeader() != null) {
+                return audioFile.getAudioHeader().getTrackLength();
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting MP3 duration: " + e.getMessage());
+        }
+        return null;
+    }
 }
