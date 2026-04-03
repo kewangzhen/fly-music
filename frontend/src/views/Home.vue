@@ -61,7 +61,7 @@
                   </el-button>
                 </div>
                 <div class="play-count" v-if="song.playCount">
-                  <el-icon><VideoCamera /></el-icon> {{ formatPlayCount(song.playCount) }}
+                  <el-icon><Headset /></el-icon> {{ formatPlayCount(song.playCount) }}
                 </div>
               </div>
               <div class="song-info">
@@ -230,7 +230,7 @@ import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { songAPI, playlistAPI, albumAPI, artistAPI } from '../api'
-import { VideoPlay, VideoPause, VideoCamera, ArrowRight, DArrowLeft, DArrowRight, List } from '@element-plus/icons-vue'
+import { VideoPlay, VideoPause, Headset, ArrowRight, DArrowLeft, DArrowRight, List } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const playerStore = usePlayerStore()

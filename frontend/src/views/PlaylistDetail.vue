@@ -18,7 +18,7 @@
           <h1 class="playlist-name">{{ playlist.name || '加载中...' }}</h1>
           <p class="playlist-desc">{{ playlist.description || '暂无描述' }}</p>
           <div class="playlist-stats">
-            <span><el-icon><VideoCamera /></el-icon> {{ formatPlayCount(playlist.playCount) }} 次播放</span>
+            <span><el-icon><Headset /></el-icon> {{ formatPlayCount(playlist.playCount) }} 次播放</span>
             <span><el-icon><Collection /></el-icon> {{ playlist.songCount || 0 }} 首歌</span>
             <span><el-icon><Clock /></el-icon> 创建于 {{ playlist.createdAt || '未知' }}</span>
           </div>
@@ -115,7 +115,7 @@ import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { playlistAPI } from '../api'
-import { Search, VideoPlay, VideoCamera, Collection, Clock, FolderAdd, Share, Plus, Delete } from '@element-plus/icons-vue'
+import { Search, VideoPlay, Headset, Collection, Clock, FolderAdd, Share, Plus, Delete } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

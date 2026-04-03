@@ -12,7 +12,7 @@
             {{ formatNumber(artist.fanCount) }} 粉丝
           </span>
           <span class="stat-item">
-            <el-icon><Music /></el-icon>
+            <el-icon><Headset /></el-icon>
             {{ artist.songCount }} 首歌曲
           </span>
           <span class="stat-item">
@@ -97,7 +97,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Music, FolderOpened, Plus, VideoPlay, Star, Loading, ArrowLeft } from '@element-plus/icons-vue'
+import { User, Headset, FolderOpened, Plus, VideoPlay, Star, Loading, ArrowLeft } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { usePlayerStore } from '../store/player'
 import { useUserStore } from '../store/user'
