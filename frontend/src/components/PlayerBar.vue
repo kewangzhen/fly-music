@@ -486,11 +486,12 @@ const toggleQueueFavorite = async (song) => {
 }
 
 .action-btn {
-  padding: 6px;
+  padding: 8px;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
   transition: all 0.2s;
+  font-size: 18px;
 }
 
 .action-btn:hover {
