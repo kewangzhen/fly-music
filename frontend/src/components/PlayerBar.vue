@@ -55,8 +55,8 @@
     <div class="player-right">
       <el-popover placement="top" :width="200" trigger="click">
         <template #reference>
-          <el-button circle size="small" class="volume-btn">
-            <el-icon><VolumeMute v-if="playerStore.volume === 0" /><VolumeSmall v-else-if="playerStore.volume < 0.5" /><VolumeLarge v-else /></el-icon>
+          <el-button circle size="small" @click="handleToggleMute" class="volume-btn">
+            <el-icon><component :is="playerStore.volume === 0 ? 'Close' : 'Bell'" /></el-icon>
           </el-button>
         </template>
         <div class="volume-control">
@@ -131,7 +131,7 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '../store/player'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
-import { DArrowLeft, DArrowRight, VideoPlay, VideoPause, List, Close, Delete, Star, VolumeMute, VolumeSmall, VolumeLarge } from '@element-plus/icons-vue'
+import { DArrowLeft, DArrowRight, VideoPlay, VideoPause, List, Close, Delete, Star, Bell } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -192,6 +192,14 @@ const handleToggleFavorite = async () => {
 
 const handleVolumeChange = (val) => {
   playerStore.setVolume(val)
+}
+
+const handleToggleMute = () => {
+  if (playerStore.volume > 0) {
+    playerStore.setVolume(0)
+  } else {
+    playerStore.setVolume(0.7)
+  }
 }
 
 const isSongFavorited = (songId) => {
