@@ -41,6 +41,9 @@
       <div class="song-list-header">
         <h2 class="section-title">歌曲列表</h2>
         <div class="header-right">
+          <el-button type="primary" @click="showAddSongDialog">
+            <el-icon><Plus /></el-icon> 添加歌曲
+          </el-button>
           <el-input
             v-model="searchKeyword"
             placeholder="搜索歌曲..."
@@ -105,6 +108,27 @@
 
       <el-empty v-if="filteredSongs.length === 0" description="暂无歌曲" />
     </el-main>
+
+    <el-dialog v-model="addSongDialogVisible" title="添加歌曲到歌单" width="600px">
+      <el-table :data="allSongs" @selection-change="handleSelectionChange" max-height="400">
+        <el-table-column type="selection" width="50" />
+        <el-table-column prop="title" label="歌曲名称" />
+        <el-table-column prop="artists" label="歌手">
+          <template #default="scope">
+            {{ scope.row.artists?.map(a => a.name).join(', ') || '未知' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="album" label="专辑">
+          <template #default="scope">
+            {{ scope.row.album?.title || '未知' }}
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="addSongDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmAddSongs">确定添加</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="addToPlaylistDialogVisible" title="添加到歌单" width="400px">
       <el-form label-position="top">
@@ -199,9 +223,63 @@ const playSong = (song) => {
 }
 
 const userPlaylists = ref([])
+const allSongs = ref([])
+const addSongDialogVisible = ref(false)
 const addToPlaylistDialogVisible = ref(false)
 const selectedPlaylistId = ref(null)
+const selectedSongIds = ref([])
 const currentSong = ref(null)
+
+const loadAllSongs = async () => {
+  const token = localStorage.getItem('token')
+  try {
+    const res = await fetch('http://localhost:8080/api/songs', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200) {
+      allSongs.value = data.data || []
+    }
+  } catch (error) {
+    console.error('加载歌曲列表失败:', error)
+  }
+}
+
+const showAddSongDialog = async () => {
+  if (!userStore.user?.id) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  await loadAllSongs()
+  selectedSongIds.value = []
+  addSongDialogVisible.value = true
+}
+
+const handleSelectionChange = (selection) => {
+  selectedSongIds.value = selection.map(s => s.id)
+}
+
+const confirmAddSongs = async () => {
+  if (selectedSongIds.value.length === 0) {
+    ElMessage.warning('请选择歌曲')
+    return
+  }
+  const token = localStorage.getItem('token')
+  const playlistId = route.params.id
+  try {
+    for (const songId of selectedSongIds.value) {
+      await fetch(`http://localhost:8080/api/playlists/${playlistId}/songs/${songId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    }
+    ElMessage.success('添加成功')
+    addSongDialogVisible.value = false
+    loadPlaylist()
+  } catch (error) {
+    ElMessage.error('添加失败')
+  }
+}
 
 const loadUserPlaylists = async () => {
   if (!userStore.user?.id) return
