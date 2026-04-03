@@ -257,19 +257,21 @@ const beforeAvatarUpload = (file) => {
 
 const loadFavorites = async () => {
   if (!userStore.user?.id) {
-    console.log('loadFavorites: no user id')
     return
   }
   favoritesLoading.value = true
   try {
     const res = await userApi.getFavorites(userStore.user.id)
-    console.log('loadFavorites response:', res.data)
+    let favoritesData = []
+    
     if (res.data.code === 200) {
-      const favoritesData = res.data.data || []
-      console.log('favoritesData:', favoritesData)
-      const songFavorites = favoritesData.filter(f => f.targetType === 1)
-      console.log('songFavorites:', songFavorites)
-      const songs = await Promise.all(
+      favoritesData = res.data.data || []
+    } else if (Array.isArray(res.data)) {
+      favoritesData = res.data
+    }
+    
+    const songFavorites = favoritesData.filter(f => f.targetType === 1)
+    const songs = await Promise.all(
         songFavorites.map(async (fav) => {
           try {
             const songRes = await songApi.getSongById(fav.targetId)
@@ -283,7 +285,6 @@ const loadFavorites = async () => {
         })
       )
       favorites.value = songs.filter(s => s !== null)
-      console.log('favorites loaded:', favorites.value)
     }
   } catch (error) {
     console.error('获取收藏失败:', error)
