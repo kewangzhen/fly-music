@@ -147,7 +147,11 @@ export const usePlayerStore = defineStore('player', () => {
     const token = localStorage.getItem('token')
     
     if (!userStore.user && token) {
-      await userStore.getUserProfile()
+      try {
+        await userStore.getUserProfile()
+      } catch (e) {
+        console.error('获取用户信息失败:', e)
+      }
     }
     
     if (!token || !userStore.user?.id || !songId) {
@@ -156,7 +160,8 @@ export const usePlayerStore = defineStore('player', () => {
     }
     
     try {
-      const response = await fetch(`${getBaseURL()}/favorites/check?userId=${userStore.user.id}&targetType=1&targetId=${songId}`, {
+      const url = `${getBaseURL()}/favorites/check?userId=${userStore.user.id}&targetType=1&targetId=${songId}`
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`
         }

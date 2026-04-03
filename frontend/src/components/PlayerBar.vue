@@ -341,7 +341,7 @@ const toggleQueueFavorite = async (song) => {
 }
 
 .favorite-btn.is-favorited {
-  color: #f6ad55;
+  color: #f6ad55 !important;
 }
 
 .badge {
