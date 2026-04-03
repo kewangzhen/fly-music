@@ -26,8 +26,8 @@
             <el-button type="primary" size="large" round @click="playAll">
               <el-icon><VideoPlay /></el-icon> 播放全部
             </el-button>
-            <el-button size="large" round>
-              <el-icon><FolderAdd /></el-icon> 收藏
+            <el-button size="large" round :type="isFavorited ? 'default' : 'primary'" @click="toggleFavorite">
+              <el-icon><Star /></el-icon> {{ isFavorited ? '已收藏' : '收藏' }}
             </el-button>
             <el-button size="large" round>
               <el-icon><Share /></el-icon> 分享
@@ -115,7 +115,8 @@ import { useUserStore } from '../store/user'
 import { usePlayerStore } from '../store/player'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { playlistAPI } from '../api'
-import { Search, VideoPlay, Headset, Collection, Clock, FolderAdd, Share, Plus, Delete } from '@element-plus/icons-vue'
+import { Search, VideoPlay, Headset, Collection, Clock, FolderAdd, Share, Plus, Delete, Star } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
@@ -135,13 +136,8 @@ const playlist = ref({
   createdAt: ''
 })
 
-const songs = ref([
-  { id: 1, title: '孤勇者', duration: 240, cover: DEFAULT_IMAGES.cover, artists: [{ name: '陈奕迅' }], album: { title: '孤勇者' } },
-  { id: 2, title: '起风了', duration: 310, cover: DEFAULT_IMAGES.cover, artists: [{ name: '买辣椒也用券' }], album: { title: '起风了' } },
-  { id: 3, title: '海阔天空', duration: 280, cover: DEFAULT_IMAGES.cover, artists: [{ name: 'Beyond' }], album: { title: '海阔天空' } },
-  { id: 4, title: '平凡之路', duration: 295, cover: DEFAULT_IMAGES.cover, artists: [{ name: '朴树' }], album: { title: '平凡之路' } },
-  { id: 5, title: '晴天', duration: 265, cover: DEFAULT_IMAGES.cover, artists: [{ name: '周杰伦' }], album: { title: '叶惠美' } }
-])
+const songs = ref([])
+const isFavorited = ref(false)
 
 const filteredSongs = computed(() => {
   if (!searchKeyword.value) return songs.value
@@ -196,34 +192,86 @@ const handleLogout = () => {
   router.push('/login')
 }
 
-const loadPlaylist = async () => {
+const toggleFavorite = async () => {
+  if (!userStore.user?.id) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  
+  const token = localStorage.getItem('token')
+  const playlistId = route.params.id
   try {
-    const playlistId = route.params.id
-    const res = await playlistAPI.getPlaylistById(playlistId)
-    if (res.data) {
-      playlist.value = res.data
-    }
-    
-    const songsRes = await playlistAPI.getSongsInPlaylist(playlistId)
-    if (songsRes.data) {
-      songs.value = songsRes.data
+    if (isFavorited.value) {
+      await fetch(`http://localhost:8080/api/playlists/${playlistId}/favorite`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: userStore.user.id })
+      })
+      ElMessage.success('取消收藏成功')
+      isFavorited.value = false
+    } else {
+      await fetch(`http://localhost:8080/api/playlists/${playlistId}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId: userStore.user.id })
+      })
+      ElMessage.success('收藏成功')
+      isFavorited.value = true
     }
   } catch (error) {
-    console.error('加载播放列表失败:', error)
-    playlist.value = {
-      name: '经典怀旧',
-      description: '那些年我们一起听过的经典歌曲，每一首都值得回味',
-      cover: DEFAULT_IMAGES.cover,
-      playCount: 125680,
-      songCount: songs.value.length,
-      createdAt: '2024-01-15'
-    }
+    ElMessage.error('操作失败')
   }
 }
 
-onMounted(() => {
-  userStore.init()
+const checkFavoriteStatus = async () => {
+  if (!userStore.user?.id) return
+  const token = localStorage.getItem('token')
+  const playlistId = route.params.id
+  try {
+    const res = await fetch(`http://localhost:8080/api/playlists/${playlistId}/favorite/check?userId=${userStore.user.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    isFavorited.value = data.data?.favorited || false
+  } catch (error) {
+    console.error('检查收藏状态失败:', error)
+  }
+}
+
+const loadPlaylist = async () => {
+  const token = localStorage.getItem('token')
+  try {
+    const playlistId = route.params.id
+    const res = await fetch(`http://localhost:8080/api/playlists/${playlistId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = await res.json()
+    if (data.code === 200 && data.data) {
+      playlist.value = data.data
+    }
+    
+    const songsRes = await fetch(`http://localhost:8080/api/playlists/${playlistId}/songs`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const songsData = await songsRes.json()
+    if (songsData.code === 200) {
+      songs.value = songsData.data || []
+    }
+  } catch (error) {
+    console.error('加载播放列表失败:', error)
+  }
+}
+
+onMounted(async () => {
+  await userStore.init()
   loadPlaylist()
+  checkFavoriteStatus()
 })
 </script>
 
