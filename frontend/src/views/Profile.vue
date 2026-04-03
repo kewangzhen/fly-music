@@ -271,29 +271,15 @@ const loadFavorites = async () => {
   favoritesLoading.value = true
   try {
     const res = await userApi.getFavorites(userStore.user.id)
-    let favoritesData = []
+    let songs = []
     
     if (res.data.code === 200) {
-      favoritesData = res.data.data || []
+      songs = res.data.data || []
     } else if (Array.isArray(res.data)) {
-      favoritesData = res.data
+      songs = res.data
     }
     
-    const songFavorites = favoritesData.filter(f => f.targetType === 1)
-    const songs = await Promise.all(
-      songFavorites.map(async (fav) => {
-        try {
-          const songRes = await songApi.getSongById(fav.targetId)
-          if (songRes.data.code === 200) {
-            return songRes.data.data
-          }
-        } catch (e) {
-          console.error('获取歌曲失败:', e)
-        }
-        return null
-      })
-    )
-    favorites.value = songs.filter(s => s !== null)
+    favorites.value = songs
   } catch (error) {
     console.error('获取收藏失败:', error)
   } finally {

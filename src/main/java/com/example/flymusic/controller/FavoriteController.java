@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +34,16 @@ public class FavoriteController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<Map<String, Object>> getUserFavorites(@PathVariable Long userId) {
         List<UserFavorite> favorites = favoriteRepository.findByUserId(userId);
-        return ResponseEntity.ok(createSuccessResponse("获取成功", favorites));
+        List<Song> songs = new ArrayList<>();
+        
+        for (UserFavorite fav : favorites) {
+            if (fav.getTargetType() == 1) {
+                Optional<Song> songOpt = songRepository.findById(fav.getTargetId());
+                songOpt.ifPresent(songs::add);
+            }
+        }
+        
+        return ResponseEntity.ok(createSuccessResponse("获取成功", songs));
     }
 
     @GetMapping("/user/{userId}/type/{targetType}")
