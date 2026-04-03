@@ -14,8 +14,8 @@
               </el-avatar>
               <el-upload
                 class="avatar-upload"
-                :action="uploadUrl"
-                :headers="uploadHeaders"
+                :action="avatarUploadUrl"
+                :headers="avatarUploadHeaders"
                 :show-file-list="false"
                 :on-success="handleAvatarSuccess"
                 :before-upload="beforeAvatarUpload"
@@ -213,9 +213,9 @@
       <el-upload
         class="upload-demo"
         drag
-        :action="uploadUrl"
-        :headers="uploadHeaders"
-        :data="uploadData"
+        :action="songUploadUrl"
+        :headers="songUploadHeaders"
+        :data="songUploadData"
         :on-success="handleUploadSuccess"
         :on-error="handleUploadError"
         :before-upload="beforeUpload"
@@ -276,11 +276,11 @@ const myUploads = ref([])
 const uploadsLoading = ref(false)
 const showUploadDialog = ref(false)
 
-const uploadUrl = 'http://localhost:8080/api/user/songs/upload'
-const uploadHeaders = {
+const songUploadUrl = 'http://localhost:8080/api/user/songs/upload'
+const songUploadHeaders = {
   Authorization: `Bearer ${localStorage.getItem('token')}`
 }
-const uploadData = computed(() => ({
+const songUploadData = computed(() => ({
   userId: userStore.user?.id
 }))
 
@@ -319,8 +319,8 @@ const goToVip = () => {
   router.push('/vip')
 }
 
-const uploadUrl = computed(() => 'http://localhost:8080/api/upload/avatar')
-const uploadHeaders = computed(() => ({
+const avatarUploadUrl = computed(() => 'http://localhost:8080/api/upload/avatar')
+const avatarUploadHeaders = computed(() => ({
   Authorization: `Bearer ${localStorage.getItem('token')}`
 }))
 
