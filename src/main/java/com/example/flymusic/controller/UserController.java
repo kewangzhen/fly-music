@@ -1,8 +1,10 @@
 package com.example.flymusic.controller;
 
 import com.example.flymusic.entity.User;
+import com.example.flymusic.service.SystemLogService;
 import com.example.flymusic.service.UserService;
 import com.example.flymusic.utils.JwtUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,46 @@ public class UserController {
     
     @Autowired
     private JwtUtils jwtUtils;
+    
+    @Autowired
+    private SystemLogService systemLogService;
+    
+    @Autowired
+    private HttpServletRequest request;
+    
+    private String getIpAddress() {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }
+
+    private void logAction(String action, String targetType, Long targetId, String details, int status) {
+        try {
+            String token = request.getHeader("Authorization");
+            Long userId = null;
+            String username = null;
+            if (token != null && token.startsWith("Bearer ")) {
+                String jwtToken = token.replace("Bearer ", "");
+                userId = jwtUtils.getUserIdFromToken(jwtToken);
+                Optional<User> user = userService.getUserById(userId);
+                if (user.isPresent()) {
+                    username = user.get().getUsername();
+                }
+            }
+            systemLogService.logAction(userId, username, action, targetType, targetId, 
+                request.getMethod(), getIpAddress(), request.getHeader("User-Agent"), 
+                details, status, null);
+        } catch (Exception e) {
+        }
+    }
 
     /**
      * 用户注册
@@ -35,8 +77,10 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> register(@RequestBody User user) {
         try {
             User registeredUser = userService.register(user);
+            logAction("user_register", "User", registeredUser.getId(), "username:" + registeredUser.getUsername(), 1);
             return ResponseEntity.ok(createSuccessResponse("注册成功", registeredUser));
         } catch (Exception e) {
+            logAction("user_register", "User", null, e.getMessage(), 0);
             return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
         }
     }
@@ -54,8 +98,10 @@ public class UserController {
             Map<String, Object> data = new HashMap<>();
             data.put("user", user);
             data.put("token", token);
+            logAction("user_login", "User", user.getId(), "username:" + username, 1);
             return ResponseEntity.ok(createSuccessResponse("登录成功", data));
         } catch (Exception e) {
+            logAction("user_login", "User", null, "username:" + loginData.get("username") + ", error:" + e.getMessage(), 0);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(createErrorResponse(e.getMessage()));
         }
     }

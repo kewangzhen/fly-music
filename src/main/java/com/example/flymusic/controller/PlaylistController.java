@@ -5,11 +5,14 @@ import com.example.flymusic.entity.Song;
 import com.example.flymusic.entity.User;
 import com.example.flymusic.repository.UserRepository;
 import com.example.flymusic.service.PlaylistService;
+import com.example.flymusic.service.SystemLogService;
+import com.example.flymusic.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +31,49 @@ public class PlaylistController {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private SystemLogService systemLogService;
+    
+    @Autowired
+    private JwtUtils jwtUtils;
+    
+    @Autowired
+    private HttpServletRequest request;
+    
+    private String getIpAddress() {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }
+    
+    private void logAction(String action, String targetType, Long targetId, String details, int status) {
+        try {
+            String token = request.getHeader("Authorization");
+            Long userId = null;
+            String username = null;
+            if (token != null && token.startsWith("Bearer ")) {
+                String jwtToken = token.replace("Bearer ", "");
+                userId = jwtUtils.getUserIdFromToken(jwtToken);
+                Optional<User> user = userRepository.findById(userId);
+                if (user.isPresent()) {
+                    username = user.get().getUsername();
+                }
+            }
+            systemLogService.logAction(userId, username, action, targetType, targetId, 
+                request.getMethod(), getIpAddress(), request.getHeader("User-Agent"), 
+                details, status, null);
+        } catch (Exception e) {
+        }
+    }
 
     /**
      * 获取所有播放列表
@@ -75,9 +121,11 @@ public class PlaylistController {
             }
             
             Playlist createdPlaylist = playlistService.createPlaylist(playlist);
+            logAction("playlist_create", "Playlist", createdPlaylist.getId(), "name:" + createdPlaylist.getName(), 1);
             return ResponseEntity.status(HttpStatus.CREATED).body(createSuccessResponse("创建成功", createdPlaylist));
         } catch (Exception e) {
             e.printStackTrace();
+            logAction("playlist_create", "Playlist", null, e.getMessage(), 0);
             return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
         }
     }
@@ -89,8 +137,10 @@ public class PlaylistController {
     public ResponseEntity<Map<String, Object>> updatePlaylist(@PathVariable Long id, @RequestBody Playlist playlist) {
         Playlist updatedPlaylist = playlistService.updatePlaylist(id, playlist);
         if (updatedPlaylist != null) {
+            logAction("playlist_update", "Playlist", id, "name:" + updatedPlaylist.getName(), 1);
             return ResponseEntity.ok(createSuccessResponse("更新成功", updatedPlaylist));
         }
+        logAction("playlist_update", "Playlist", id, "not found", 0);
         return ResponseEntity.notFound().build();
     }
 
@@ -100,6 +150,7 @@ public class PlaylistController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deletePlaylist(@PathVariable Long id) {
         playlistService.deletePlaylist(id);
+        logAction("playlist_delete", "Playlist", id, "deleted", 1);
         return ResponseEntity.ok(createSuccessResponse("删除成功", null));
     }
 

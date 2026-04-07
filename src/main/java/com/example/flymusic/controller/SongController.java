@@ -2,8 +2,12 @@ package com.example.flymusic.controller;
 
 import com.example.flymusic.config.SongStorageService;
 import com.example.flymusic.entity.Song;
+import com.example.flymusic.entity.User;
+import com.example.flymusic.repository.UserRepository;
 import com.example.flymusic.service.CoverExtractService;
 import com.example.flymusic.service.SongService;
+import com.example.flymusic.service.SystemLogService;
+import com.example.flymusic.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -17,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -43,7 +48,53 @@ public class SongController {
 
     @Autowired
     private CoverExtractService coverExtractService;
-
+    
+    @Autowired
+    private SystemLogService systemLogService;
+    
+    @Autowired
+    private JwtUtils jwtUtils;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private HttpServletRequest request;
+    
+    private String getIpAddress() {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("X-Real-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip;
+    }
+    
+    private void logAction(String action, String targetType, Long targetId, String details, int status) {
+        try {
+            String token = request.getHeader("Authorization");
+            Long userId = null;
+            String username = null;
+            if (token != null && token.startsWith("Bearer ")) {
+                String jwtToken = token.replace("Bearer ", "");
+                userId = jwtUtils.getUserIdFromToken(jwtToken);
+                Optional<User> user = userRepository.findById(userId);
+                if (user.isPresent()) {
+                    username = user.get().getUsername();
+                }
+            }
+            systemLogService.logAction(userId, username, action, targetType, targetId, 
+                request.getMethod(), getIpAddress(), request.getHeader("User-Agent"), 
+                details, status, null);
+        } catch (Exception e) {
+        }
+    }
+    
     @Value("${song.url.prefix:/api/songs/file/}")
     private String songUrlPrefix;
 
@@ -193,6 +244,7 @@ public class SongController {
     @PostMapping("/{id}/play")
     public ResponseEntity<Map<String, Object>> playSong(@PathVariable Long id) {
         songService.incrementPlayCount(id);
+        logAction("song_play", "Song", id, "play count incremented", 1);
         return ResponseEntity.ok(createSuccessResponse("播放成功", null));
     }
 
@@ -202,6 +254,7 @@ public class SongController {
     @PostMapping("/{id}/approve")
     public ResponseEntity<Map<String, Object>> approveSong(@PathVariable Long id) {
         songService.approveSong(id);
+        logAction("song_approve", "Song", id, "approved", 1);
         return ResponseEntity.ok(createSuccessResponse("审核通过", null));
     }
 
