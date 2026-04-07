@@ -61,31 +61,31 @@
       <!-- 用户列表 -->
       <el-card class="table-card">
         <el-table :data="users" stripe v-loading="loading" :scrollbar-always-on="true">
-          <el-table-column prop="id" label="ID" width="70" />
-          <el-table-column prop="username" label="用户名" min-width="120" />
-          <el-table-column prop="email" label="邮箱" min-width="180" />
-          <el-table-column prop="phone" label="手机号" min-width="120" />
-          <el-table-column prop="nickname" label="昵称" min-width="100" />
-          <el-table-column prop="role" label="角色" width="90">
+          <el-table-column prop="id" label="ID" width="70" :show-overflow-tooltip="true" />
+          <el-table-column prop="username" label="用户名" min-width="120" :show-overflow-tooltip="true" />
+          <el-table-column prop="email" label="邮箱" min-width="180" :show-overflow-tooltip="true" />
+          <el-table-column prop="phone" label="手机号" min-width="120" :show-overflow-tooltip="true" />
+          <el-table-column prop="nickname" label="昵称" min-width="100" :show-overflow-tooltip="true" />
+          <el-table-column prop="role" label="角色" width="90" :show-overflow-tooltip="true">
             <template #default="scope">
               <el-tag :type="scope.row.role === 1 ? 'danger' : 'success'">
                 {{ scope.row.role === 1 ? '管理员' : '普通用户' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="80">
+          <el-table-column prop="status" label="状态" width="80" :show-overflow-tooltip="true">
             <template #default="scope">
               <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
                 {{ scope.row.status === 1 ? '正常' : '禁用' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="vipExpireAt" label="VIP到期" width="150">
+          <el-table-column prop="vipExpireAt" label="VIP到期" width="150" :show-overflow-tooltip="true">
             <template #default="scope">
               {{ scope.row.vipExpireAt ? formatDate(scope.row.vipExpireAt) : '非VIP' }}
             </template>
           </el-table-column>
-          <el-table-column prop="createdAt" label="注册时间" width="150">
+          <el-table-column prop="createdAt" label="注册时间" width="150" :show-overflow-tooltip="true">
             <template #default="scope">
               {{ formatDate(scope.row.createdAt) }}
             </template>
