@@ -4,6 +4,7 @@ import com.example.flymusic.entity.Artist;
 import com.example.flymusic.entity.Category;
 import com.example.flymusic.entity.Song;
 import com.example.flymusic.entity.User;
+import com.example.flymusic.entity.SystemConfig;
 import com.example.flymusic.entity.dto.AdminRecommendationDTO;
 import com.example.flymusic.repository.*;
 import com.example.flymusic.service.AdminRecommendationService;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -33,13 +35,73 @@ public class AdminRecommendationServiceImpl implements AdminRecommendationServic
     @Autowired
     private ArtistRepository artistRepository;
 
-    private static final Map<String, Integer> recommendationWeights = new ConcurrentHashMap<>();
+    @Autowired
+    private SystemConfigRepository systemConfigRepository;
 
+    private static final String CONFIG_KEY = "recommendation_weights";
+    private static final Map<String, Integer> defaultWeights = new HashMap<>();
+    
     static {
-        recommendationWeights.put("radar", 3);
-        recommendationWeights.put("hot", 4);
-        recommendationWeights.put("category", 2);
-        recommendationWeights.put("similar", 1);
+        defaultWeights.put("radar", 3);
+        defaultWeights.put("hot", 4);
+        defaultWeights.put("category", 2);
+        defaultWeights.put("similar", 1);
+    }
+
+    private final Map<String, Integer> recommendationWeights = new ConcurrentHashMap<>();
+
+    @PostConstruct
+    public void init() {
+        loadWeightsFromDatabase();
+    }
+
+    private void loadWeightsFromDatabase() {
+        try {
+            Optional<SystemConfig> configOpt = systemConfigRepository.findByConfigKey(CONFIG_KEY);
+            if (configOpt.isPresent()) {
+                String value = configOpt.get().getConfigValue();
+                if (value != null && !value.isEmpty()) {
+                    String[] pairs = value.split(",");
+                    for (String pair : pairs) {
+                        String[] kv = pair.split(":");
+                        if (kv.length == 2) {
+                            recommendationWeights.put(kv[0].trim(), Integer.parseInt(kv[1].trim()));
+                        }
+                    }
+                }
+            }
+            
+            if (recommendationWeights.isEmpty()) {
+                recommendationWeights.putAll(defaultWeights);
+                saveWeightsToDatabase();
+            }
+        } catch (Exception e) {
+            recommendationWeights.putAll(defaultWeights);
+        }
+    }
+
+    private void saveWeightsToDatabase() {
+        try {
+            Optional<SystemConfig> configOpt = systemConfigRepository.findByConfigKey(CONFIG_KEY);
+            SystemConfig config;
+            if (configOpt.isPresent()) {
+                config = configOpt.get();
+            } else {
+                config = new SystemConfig();
+                config.setConfigKey(CONFIG_KEY);
+                config.setDescription("推荐算法权重配置");
+            }
+            
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, Integer> entry : recommendationWeights.entrySet()) {
+                if (sb.length() > 0) sb.append(",");
+                sb.append(entry.getKey()).append(":").append(entry.getValue());
+            }
+            config.setConfigValue(sb.toString());
+            systemConfigRepository.save(config);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -149,14 +211,11 @@ public class AdminRecommendationServiceImpl implements AdminRecommendationServic
         if (config.getSimilarWeight() != null) {
             recommendationWeights.put("similar", Math.max(1, Math.min(5, config.getSimilarWeight())));
         }
+        saveWeightsToDatabase();
     }
 
     @Override
     public void recalculateWithNewWeights() {
         System.out.println("使用新权重重新计算推荐: " + recommendationWeights);
-    }
-
-    public static Map<String, Integer> getRecommendationWeights() {
-        return Collections.unmodifiableMap(recommendationWeights);
     }
 }
