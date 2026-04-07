@@ -273,8 +273,8 @@ const loadDashboard = async () => {
   loading.value = true
   try {
     const response = await adminAPI.getRecommendationDashboard()
-    if (response.data.code === 200) {
-      data.value = response.data.data
+    if (response.code === 200) {
+      data.value = response.data
 
       if (data.value.config) {
         weightConfig.radarWeight = data.value.config.radarWeight || 3
@@ -300,8 +300,8 @@ const saveConfig = async () => {
   saving.value = true
   try {
     const response = await adminAPI.updateRecommendationConfig(weightConfig)
-    if (response.data.code === 200) {
-      ElMessage.success(response.data.message || '配置保存成功')
+    if (response.code === 200) {
+      ElMessage.success(response.message || '配置保存成功')
     } else {
       ElMessage.error('保存失败')
     }
