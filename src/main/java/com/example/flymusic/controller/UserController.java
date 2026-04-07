@@ -77,10 +77,12 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> register(@RequestBody User user) {
         try {
             User registeredUser = userService.register(user);
-            logAction("user_register", "User", registeredUser.getId(), "username:" + registeredUser.getUsername(), 1);
+            systemLogService.logAction(registeredUser.getId(), registeredUser.getUsername(), "user_register", "User", registeredUser.getId(), 
+                "POST", getIpAddress(), request.getHeader("User-Agent"), "username:" + registeredUser.getUsername(), 1, null);
             return ResponseEntity.ok(createSuccessResponse("注册成功", registeredUser));
         } catch (Exception e) {
-            logAction("user_register", "User", null, e.getMessage(), 0);
+            systemLogService.logAction(null, user.getUsername(), "user_register", "User", null, 
+                "POST", getIpAddress(), request.getHeader("User-Agent"), "username:" + user.getUsername() + ", error:" + e.getMessage(), 0, e.getMessage());
             return ResponseEntity.badRequest().body(createErrorResponse(e.getMessage()));
         }
     }
@@ -98,10 +100,12 @@ public class UserController {
             Map<String, Object> data = new HashMap<>();
             data.put("user", user);
             data.put("token", token);
-            logAction("user_login", "User", user.getId(), "username:" + username, 1);
+            systemLogService.logAction(user.getId(), user.getUsername(), "user_login", "User", user.getId(), 
+                "POST", getIpAddress(), request.getHeader("User-Agent"), "username:" + username, 1, null);
             return ResponseEntity.ok(createSuccessResponse("登录成功", data));
         } catch (Exception e) {
-            logAction("user_login", "User", null, "username:" + loginData.get("username") + ", error:" + e.getMessage(), 0);
+            systemLogService.logAction(null, loginData.get("username"), "user_login", "User", null, 
+                "POST", getIpAddress(), request.getHeader("User-Agent"), "username:" + loginData.get("username") + ", error:" + e.getMessage(), 0, e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(createErrorResponse(e.getMessage()));
         }
     }

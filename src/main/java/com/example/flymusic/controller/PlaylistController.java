@@ -72,6 +72,7 @@ public class PlaylistController {
                 request.getMethod(), getIpAddress(), request.getHeader("User-Agent"), 
                 details, status, null);
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
