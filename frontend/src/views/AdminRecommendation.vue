@@ -331,43 +331,7 @@ onMounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--dark-bg);
-}
-
-.navbar {
-  background: var(--card-bg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 30px;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.logo {
-  font-size: 20px;
-  font-weight: bold;
-  color: #667eea;
-  cursor: pointer;
-}
-
-.nav-menu {
-  flex: 1;
-  margin: 0 20px;
-  border: none;
-}
-
-.user-menu {
-  display: flex;
-  align-items: center;
-}
-
-.user-avatar {
-  cursor: pointer;
-  color: #667eea;
-  font-weight: 500;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
 .main-content {
@@ -382,12 +346,12 @@ onMounted(() => {
 .page-title {
   font-size: 28px;
   font-weight: 600;
-  color: #303133;
+  color: #ffffff;
   margin-bottom: 8px;
 }
 
 .page-desc {
-  color: #909399;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
 }
 
@@ -402,6 +366,9 @@ onMounted(() => {
 .stat-card {
   border-radius: 12px;
   transition: transform 0.3s, box-shadow 0.3s;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stat-card:hover {
@@ -449,12 +416,12 @@ onMounted(() => {
 .stat-value {
   font-size: 28px;
   font-weight: bold;
-  color: #303133;
+  color: #ffffff;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.7);
   margin-top: 4px;
 }
 
@@ -465,6 +432,9 @@ onMounted(() => {
 .chart-card {
   border-radius: 12px;
   min-height: 350px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card-header {
@@ -473,6 +443,7 @@ onMounted(() => {
   align-items: center;
   font-weight: 600;
   font-size: 16px;
+  color: #ffffff;
 }
 
 .category-chart {
@@ -498,18 +469,18 @@ onMounted(() => {
 .category-name {
   font-weight: 500;
   font-size: 14px;
-  color: #303133;
+  color: #ffffff;
 }
 
 .category-count {
   font-size: 12px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .category-bar-wrapper {
   flex: 1;
   height: 20px;
-  background: #f0f2f5;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
 }
@@ -592,16 +563,19 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 4px;
-  color: #303133;
+  color: #ffffff;
 }
 
 .artist-info p {
   font-size: 13px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .config-card {
   border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .weight-config {
@@ -612,7 +586,7 @@ onMounted(() => {
 
 .weight-item {
   padding: 16px;
-  background: #f8f9fc;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 10px;
 }
 
@@ -626,7 +600,7 @@ onMounted(() => {
 .weight-label {
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: #ffffff;
 }
 
 .weight-value {
@@ -637,7 +611,7 @@ onMounted(() => {
 
 .weight-desc {
   font-size: 12px;
-  color: #909399;
+  color: rgba(255, 255, 255, 0.7);
   margin-top: 8px;
 }
 
