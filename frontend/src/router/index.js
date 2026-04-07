@@ -137,9 +137,7 @@ router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('token')
   
   if (token && (!userStore.isLoggedIn || !userStore.user)) {
-    console.log('Calling init() to fetch user...')
     await userStore.init()
-    console.log('After init - user:', userStore.user)
   }
   
   if (to.path.startsWith('/admin')) {
@@ -148,10 +146,7 @@ router.beforeEach(async (to, from, next) => {
       next('/login')
       return
     }
-    console.log('User store:', userStore.user, 'isLoggedIn:', userStore.isLoggedIn)
-    const userRole = userStore.user?.role
-    console.log('User role:', userRole, 'Type:', typeof userRole)
-    if (userRole != 1) {
+    if (userStore.user?.role != 1) {
       ElMessage.error('无权限访问')
       next('/')
       return
