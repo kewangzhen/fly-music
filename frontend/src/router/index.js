@@ -132,12 +132,12 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   const token = localStorage.getItem('token')
   
   if (token && !userStore.isLoggedIn) {
-    userStore.init()
+    await userStore.init()
   }
   
   if (to.path.startsWith('/admin')) {
