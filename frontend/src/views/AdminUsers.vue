@@ -60,47 +60,50 @@
       
       <!-- 用户列表 -->
       <el-card class="table-card">
-        <el-table :data="users" stripe v-loading="loading">
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="username" label="用户名" width="150" />
-          <el-table-column prop="email" label="邮箱" width="200" />
-          <el-table-column prop="phone" label="手机号" width="150" />
-          <el-table-column prop="nickname" label="昵称" width="120" />
-          <el-table-column prop="role" label="角色" width="100">
+        <el-table :data="users" stripe v-loading="loading" :scrollbar-always-on="true">
+          <el-table-column prop="id" label="ID" width="70" />
+          <el-table-column prop="username" label="用户名" min-width="120" />
+          <el-table-column prop="email" label="邮箱" min-width="180" />
+          <el-table-column prop="phone" label="手机号" min-width="120" />
+          <el-table-column prop="nickname" label="昵称" min-width="100" />
+          <el-table-column prop="role" label="角色" width="90">
             <template #default="scope">
               <el-tag :type="scope.row.role === 1 ? 'danger' : 'success'">
                 {{ scope.row.role === 1 ? '管理员' : '普通用户' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
+          <el-table-column prop="status" label="状态" width="80">
             <template #default="scope">
               <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
                 {{ scope.row.status === 1 ? '正常' : '禁用' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="vipExpireAt" label="VIP到期" width="180">
+          <el-table-column prop="vipExpireAt" label="VIP到期" width="150">
             <template #default="scope">
               {{ scope.row.vipExpireAt ? formatDate(scope.row.vipExpireAt) : '非VIP' }}
             </template>
           </el-table-column>
-          <el-table-column prop="createdAt" label="注册时间" width="180">
+          <el-table-column prop="createdAt" label="注册时间" width="150">
             <template #default="scope">
               {{ formatDate(scope.row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="180" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="editUser(scope.row)">编辑</el-button>
-              <el-button 
-                size="small" 
-                :type="scope.row.status === 1 ? 'danger' : 'success'"
-                @click="toggleUserStatus(scope.row)"
-              >
-                {{ scope.row.status === 1 ? '禁用' : '启用' }}
-              </el-button>
-              <el-button size="small" type="warning" @click="setVip(scope.row)">设置VIP</el-button>
+              <div class="action-buttons">
+                <el-button size="small" type="primary" link @click="editUser(scope.row)">编辑</el-button>
+                <el-button 
+                  size="small" 
+                  :type="scope.row.status === 1 ? 'danger' : 'success'" 
+                  link
+                  @click="toggleUserStatus(scope.row)"
+                >
+                  {{ scope.row.status === 1 ? '禁用' : '启用' }}
+                </el-button>
+                <el-button size="small" type="warning" link @click="setVip(scope.row)">VIP</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -430,6 +433,26 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   padding: 15px 0;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.action-buttons :deep(.el-button) {
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.table-card :deep(.el-table__body-wrapper) {
+  overflow-x: auto;
+}
+
+.table-card :deep(.el-table__fixed-right) {
+  background: rgba(30, 30, 50, 0.95);
 }
 
 .pagination-container :deep(.el-pagination) {
