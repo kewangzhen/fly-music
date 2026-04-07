@@ -13,7 +13,7 @@
       <el-menu-item index="/admin">概览</el-menu-item>
       <el-menu-item index="/admin/users">用户管理</el-menu-item>
       <el-menu-item index="/admin/songs">歌曲管理</el-menu-item>
-      <el-menu-item index="/admin/recommendations">推荐管理</el-menu-item>
+      <el-menu-item index="/admin/recommendation">推荐管理</el-menu-item>
       <el-menu-item index="/admin/config">系统配置</el-menu-item>
     </el-menu>
     <div class="user-menu">
