@@ -1,26 +1,7 @@
 <template>
   <div class="admin-container">
-    <el-header height="60px" class="navbar">
-      <div class="logo" @click="$router.push('/')">Fly Music 管理后台</div>
-      <el-menu mode="horizontal" :router="true" class="nav-menu" :default-active="$route.path">
-        <el-menu-item index="/admin" route="/admin">概览</el-menu-item>
-        <el-menu-item index="/admin/users" route="/admin/users">用户管理</el-menu-item>
-        <el-menu-item index="/admin/songs" route="/admin/songs">音乐管理</el-menu-item>
-        <el-menu-item index="/admin/config" route="/admin/config">系统配置</el-menu-item>
-        <el-menu-item index="/admin/recommendation" route="/admin/recommendation">推荐决策</el-menu-item>
-      </el-menu>
-      <div class="user-menu">
-        <el-dropdown>
-          <span class="user-avatar">管理员</span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="$router.push('/')">返回前台</el-dropdown-item>
-              <el-dropdown-item @click="handleLogout">退出</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </el-header>
+    <!-- 导航栏 -->
+    <AdminNavbar />
 
     <el-main class="main-content">
       <div class="page-header">
@@ -241,6 +222,7 @@ import { ElMessage } from 'element-plus'
 import { VideoPlay, Timer, User, Files } from '@element-plus/icons-vue'
 import { DEFAULT_IMAGES } from '../assets/defaultImages'
 import { adminAPI } from '../api'
+import AdminNavbar from '../components/AdminNavbar.vue'
 
 const router = useRouter()
 
@@ -337,10 +319,6 @@ const onWeightChange = () => {
 
 const handleImageError = (e) => {
   e.target.src = defaultAvatar
-}
-
-const handleLogout = () => {
-  router.push('/login')
 }
 
 onMounted(() => {
