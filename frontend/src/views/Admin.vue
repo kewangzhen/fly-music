@@ -1,5 +1,38 @@
 <template>
   <div class="admin-container">
+    <!-- 导航栏 -->
+    <div class="navbar">
+      <div class="logo" @click="$router.push('/')">FlyMusic</div>
+      <el-menu
+        mode="horizontal"
+        :default-active="$route.path"
+        class="nav-menu"
+        background-color="transparent"
+        text-color="rgba(255, 255, 255, 0.8)"
+        active-text-color="#fff"
+        router
+      >
+        <el-menu-item index="/admin">概览</el-menu-item>
+        <el-menu-item index="/admin/users">用户管理</el-menu-item>
+        <el-menu-item index="/admin/songs">歌曲管理</el-menu-item>
+        <el-menu-item index="/admin/recommendations">推荐管理</el-menu-item>
+        <el-menu-item index="/admin/config">系统配置</el-menu-item>
+      </el-menu>
+      <div class="user-menu">
+        <el-dropdown @command="handleCommand">
+          <span class="user-avatar">
+            <el-icon><User /></el-icon>
+            {{ userStore.user?.username || '管理员' }}
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+    </div>
+
     <!-- 主要内容 -->
     <el-main class="main-content">
       <!-- 统计卡片 -->
@@ -75,10 +108,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../store/user'
 import { adminAPI } from '../api'
 import { User, Headset, Document, TrendCharts } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 const stats = ref({
   totalUsers: 0,
@@ -117,8 +152,11 @@ const refreshStats = () => {
   loadStats()
 }
 
-const handleLogout = () => {
-  router.push('/login')
+const handleCommand = (command) => {
+  if (command === 'logout') {
+    localStorage.removeItem('token')
+    router.push('/login')
+  }
 }
 
 onMounted(() => {
@@ -131,29 +169,53 @@ onMounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--dark-bg);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
 .navbar {
-  background-color: var(--card-bg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: bold;
-  color: #667eea;
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   cursor: pointer;
+  letter-spacing: 1px;
 }
 
 .nav-menu {
   flex: 1;
-  margin: 0 20px;
+  margin: 0 30px;
   border: none;
+  background: transparent;
+}
+
+.nav-menu :deep(.el-menu-item) {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.nav-menu :deep(.el-menu-item:hover) {
+  background: rgba(102, 126, 234, 0.2);
+  color: #fff;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 8px;
 }
 
 .user-menu {
@@ -163,14 +225,25 @@ onMounted(() => {
 
 .user-avatar {
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 20px;
-  background-color: #f0f0f0;
+  padding: 8px 20px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .main-content {
   flex: 1;
-  padding: 20px;
+  padding: 30px;
 }
 
 .stats-row {
@@ -181,6 +254,11 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .stat-icon {
@@ -192,20 +270,54 @@ onMounted(() => {
 .stat-value {
   font-size: 28px;
   font-weight: bold;
-  color: #333;
+  color: #fff;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .action-row {
   margin-bottom: 20px;
 }
 
+.action-row :deep(.el-card) {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.action-row :deep(.el-card h3) {
+  color: #fff;
+  margin-bottom: 15px;
+}
+
+.action-row :deep(.el-button) {
+  border-radius: 10px;
+}
+
+.action-row :deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
 .chart-row {
   margin-bottom: 20px;
+}
+
+.chart-row :deep(.el-card) {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.chart-row :deep(.el-card h3) {
+  color: #fff;
 }
 
 .chart-placeholder {
@@ -213,6 +325,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: rgba(255, 255, 255, 0.5);
 }
 </style>
