@@ -37,10 +37,16 @@ apiClient.interceptors.response.use(
     const res = response.data
     if (res.code === 200) {
       return res
+    } else if (res.code === 400 || res.code === 401) {
+      localStorage.removeItem('token')
+      ElMessage.warning('登录已过期，请重新登录')
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     } else {
       ElMessage.error(res.message || '请求失败')
-      return Promise.reject(new Error(res.message || '请求失败'))
     }
+    return Promise.reject(new Error(res.message || '请求失败'))
   },
   error => {
     const status = error.response?.status
