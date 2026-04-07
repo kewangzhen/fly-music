@@ -292,29 +292,53 @@ onMounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--dark-bg);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
 .navbar {
-  background-color: var(--card-bg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: bold;
-  color: #667eea;
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   cursor: pointer;
+  letter-spacing: 1px;
 }
 
 .nav-menu {
   flex: 1;
-  margin: 0 20px;
+  margin: 0 30px;
   border: none;
+  background: transparent;
+}
+
+.nav-menu :deep(.el-menu-item) {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.nav-menu :deep(.el-menu-item:hover) {
+  background: rgba(102, 126, 234, 0.2);
+  color: #fff;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-radius: 8px;
 }
 
 .user-menu {
@@ -324,27 +348,149 @@ onMounted(() => {
 
 .user-avatar {
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 20px;
-  background-color: #f0f0f0;
+  padding: 8px 20px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .main-content {
   flex: 1;
-  padding: 20px;
+  padding: 30px;
 }
 
 .toolbar-card {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.toolbar-card :deep(.el-card__body) {
+  padding: 20px;
 }
 
 .table-card {
-  margin-bottom: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.table-card :deep(.el-table) {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: rgba(102, 126, 234, 0.2);
+  --el-table-row-hover-bg-color: rgba(102, 126, 234, 0.15);
+  --el-table-border-color: rgba(255, 255, 255, 0.1);
+  --el-table-text-color: rgba(255, 255, 255, 0.9);
+  --el-table-header-text-color: #fff;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.table-card :deep(.el-table__header) {
+  font-weight: 600;
+}
+
+.table-card :deep(.el-table__row) {
+  transition: all 0.3s ease;
+}
+
+.table-card :deep(.el-table__row:hover) {
+  transform: scale(1.01);
+}
+
+.table-card :deep(.el-tag) {
+  border: none;
+  font-weight: 500;
+}
+
+.table-card :deep(.el-button) {
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.table-card :deep(.el-button:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .pagination-container {
-  margin-top: 20px;
+  margin-top: 25px;
   display: flex;
   justify-content: flex-end;
+  padding: 15px 0;
+}
+
+.pagination-container :deep(.el-pagination) {
+  --el-pagination-bg-color: rgba(255, 255, 255, 0.1);
+  --el-pagination-text-color: rgba(255, 255, 255, 0.8);
+  --el-pagination-button-bg-color: rgba(255, 255, 255, 0.1);
+  --el-pagination-hover-color: #667eea;
+}
+
+.toolbar-card :deep(.el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.toolbar-card :deep(.el-input__wrapper:hover),
+.toolbar-card :deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.toolbar-card :deep(.el-input__inner) {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.toolbar-card :deep(.el-input__inner::placeholder) {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.toolbar-card :deep(.el-select__wrapper) {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.toolbar-card :deep(.el-button) {
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.toolbar-card :deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.toolbar-card :deep(.el-button--primary:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.toolbar-card :deep(.el-button:not(.el-button--primary)) {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toolbar-card :deep(.el-button:not(.el-button--primary):hover) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #667eea;
 }
 </style>
