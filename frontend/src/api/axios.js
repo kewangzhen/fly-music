@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 
 const apiClient = axios.create({
   baseURL: 'http://localhost:8080/api',
@@ -8,6 +9,15 @@ const apiClient = axios.create({
     'Content-Type': 'application/json'
   }
 })
+
+let router = null
+
+const getRouter = () => {
+  if (!router) {
+    router = useRouter()
+  }
+  return router
+}
 
 apiClient.interceptors.request.use(
   config => {
@@ -33,7 +43,19 @@ apiClient.interceptors.response.use(
     }
   },
   error => {
-    ElMessage.error(error.message || '网络错误')
+    const status = error.response?.status
+    const message = error.response?.data?.message || error.message
+    
+    if (status === 401 || (message && message.includes('JWT'))) {
+      localStorage.removeItem('token')
+      ElMessage.warning('登录已过期，请重新登录')
+      
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+    } else {
+      ElMessage.error(message || '网络错误')
+    }
     return Promise.reject(error)
   }
 )
