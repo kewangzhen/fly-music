@@ -140,7 +140,18 @@ router.beforeEach((to, from, next) => {
     userStore.init()
   }
   
-  if (!whiteList.includes(to.path)) {
+  if (to.path.startsWith('/admin')) {
+    if (!userStore.isLoggedIn || !token) {
+      ElMessage.warning('请登录后继续使用')
+      next('/login')
+      return
+    }
+    if (userStore.user?.role !== 1) {
+      ElMessage.error('无权限访问')
+      next('/')
+      return
+    }
+  } else if (!whiteList.includes(to.path)) {
     if (!userStore.isLoggedIn || !token) {
       ElMessage.warning('请登录后继续使用')
       next('/login')
