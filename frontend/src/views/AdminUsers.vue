@@ -66,7 +66,7 @@
           <el-table-column prop="email" label="邮箱" min-width="180" :show-overflow-tooltip="true" />
           <el-table-column prop="phone" label="手机号" min-width="120" :show-overflow-tooltip="true" />
           <el-table-column prop="nickname" label="昵称" min-width="100" :show-overflow-tooltip="true" />
-          <el-table-column prop="role" label="角色" width="90" :show-overflow-tooltip="true">
+          <el-table-column prop="role" label="角色" width="100">
             <template #default="scope">
               <el-tag :type="scope.row.role === 1 ? 'danger' : 'success'">
                 {{ scope.row.role === 1 ? '管理员' : '普通用户' }}
