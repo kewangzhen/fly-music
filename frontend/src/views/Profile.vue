@@ -628,12 +628,24 @@ const loadListeningReport = async () => {
   reportLoading.value = true
   try {
     const token = localStorage.getItem('token')
-    const res = await fetch(`http://localhost:8080/api/user/report/listening?userId=${userStore.user.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
+    const res = await fetch(`http://localhost:8080/api/report/listening`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'X-User-Id': userStore.user.id
+      }
     })
     const data = await res.json()
     if (data.code === 200) {
-      listeningReport.value = data.data || {}
+      const report = data.data || {}
+      listeningReport.value = {
+        totalPlayCount: report.summary?.totalPlays || 0,
+        totalListenMinutes: Math.round((report.summary?.totalHours || 0) * 60),
+        uniqueSongCount: report.summary?.totalSongs || 0,
+        weekPlayCount: report.summary?.totalPlays || 0,
+        topSongs: report.topSongs || [],
+        categoryDistribution: report.categoryDistribution || [],
+        topArtists: report.topArtists || []
+      }
     }
   } catch (error) {
     console.error('获取听歌报告失败:', error)
