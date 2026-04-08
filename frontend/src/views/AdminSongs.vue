@@ -80,26 +80,41 @@
               {{ formatDate(scope.row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="180" fixed="right">
+          <el-table-column label="操作" width="140" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="playSong(scope.row)">播放</el-button>
-              <el-button 
-                v-if="scope.row.status === 0" 
-                size="small" 
-                type="success"
-                @click="approveSong(scope.row)"
-              >
-                审核
-              </el-button>
-              <el-button 
-                v-if="scope.row.status === 1" 
-                size="small" 
-                type="danger"
-                @click="rejectSong(scope.row)"
-              >
-                下架
-              </el-button>
-              <el-button size="small" type="warning" @click="editSong(scope.row)">编辑</el-button>
+              <div class="action-buttons">
+                <el-tooltip content="播放" placement="top">
+                  <el-button circle size="small" @click="playSong(scope.row)">
+                    <el-icon><VideoPlay /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip :content="scope.row.status === 0 ? '审核通过' : '已通过'" placement="top">
+                  <el-button 
+                    circle 
+                    size="small" 
+                    :type="scope.row.status === 0 ? 'success' : 'info'"
+                    @click="approveSong(scope.row)"
+                  >
+                    <el-icon><Check /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip content="下架" placement="top">
+                  <el-button 
+                    circle 
+                    size="small" 
+                    type="danger"
+                    :disabled="scope.row.status === 0"
+                    @click="rejectSong(scope.row)"
+                  >
+                    <el-icon><Close /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip content="编辑" placement="top">
+                  <el-button circle size="small" type="warning" @click="editSong(scope.row)">
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                </el-tooltip>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -185,7 +200,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { Search, VideoPlay, Check, Close, Edit } from '@element-plus/icons-vue'
 import { songAPI, categoryAPI } from '../api'
 import { usePlayerStore } from '../store/player'
 import AdminNavbar from '../components/AdminNavbar.vue'
@@ -472,6 +487,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  white-space: nowrap;
+}
+
+.action-buttons .el-button {
+  transition: all 0.3s ease;
+}
+
+.action-buttons .el-button:hover {
+  transform: scale(1.1);
 }
 </style>
