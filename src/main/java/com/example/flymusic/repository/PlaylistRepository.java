@@ -51,7 +51,7 @@ public interface PlaylistRepository extends JpaRepository<Playlist, Long> {
     /**
      * 查询心动歌单（根据用户偏好推荐）
      */
-    @Query("SELECT p FROM Playlist p WHERE p.isPublic = true AND p.status = 1 AND p.type = 1 ORDER BY p.playCount DESC")
+    @Query("SELECT p FROM Playlist p WHERE p.isPublic = true AND p.status = 1 ORDER BY p.playCount DESC")
     List<Playlist> findHeartPlaylists(Pageable pageable);
     
     /**
