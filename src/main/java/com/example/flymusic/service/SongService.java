@@ -107,4 +107,9 @@ public interface SongService {
      * 统计歌曲总数
      */
     long countSongs(Integer status);
+    
+    /**
+     * 从MP3文件提取并更新歌曲元数据
+     */
+    Song extractAndUpdateMetadata(Long songId);
 }

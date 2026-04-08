@@ -269,6 +269,22 @@ public class SongController {
     }
 
     /**
+     * 从MP3文件提取并更新歌曲元数据
+     */
+    @PostMapping("/{id}/extract-metadata")
+    public ResponseEntity<Map<String, Object>> extractMetadata(@PathVariable Long id) {
+        try {
+            Song updatedSong = songService.extractAndUpdateMetadata(id);
+            if (updatedSong != null) {
+                return ResponseEntity.ok(createSuccessResponse("元数据提取成功", updatedSong));
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(createErrorResponse("提取失败: " + e.getMessage()));
+        }
+    }
+
+    /**
      * 分页获取歌曲（管理员）
      */
     @GetMapping("/page")

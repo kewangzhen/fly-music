@@ -83,6 +83,11 @@ export default {
     return apiClient.post(`${API_BASE_URL}/${id}/reject`)
   },
 
+  // 从MP3提取元数据
+  extractMetadata(id) {
+    return apiClient.post(`${API_BASE_URL}/${id}/extract-metadata`)
+  },
+
   // 管理员分页获取歌曲
   getAdminSongsByPage(page = 0, size = 10, status = 1) {
     return apiClient.get(`${API_BASE_URL}/page`, { params: { page, size, status } })

@@ -80,7 +80,7 @@
               {{ formatDate(scope.row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="180" fixed="right">
+          <el-table-column label="操作" width="220" fixed="right">
             <template #default="scope">
               <div class="action-buttons">
                 <el-tooltip content="播放" placement="top">
@@ -112,6 +112,11 @@
                 <el-tooltip content="编辑" placement="top">
                   <el-button circle size="small" type="warning" @click="editSong(scope.row)">
                     <el-icon><Edit /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip content="提取元数据" placement="top">
+                  <el-button circle size="small" type="info" @click="extractMetadata(scope.row)">
+                    <el-icon><Upload /></el-icon>
                   </el-button>
                 </el-tooltip>
               </div>
@@ -216,7 +221,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, VideoPlay, Check, Close, Edit } from '@element-plus/icons-vue'
+import { Search, VideoPlay, Check, Close, Edit, Upload } from '@element-plus/icons-vue'
 import { songAPI, categoryAPI } from '../api'
 import { usePlayerStore } from '../store/player'
 import AdminNavbar from '../components/AdminNavbar.vue'
@@ -386,6 +391,22 @@ const rejectSong = async (song) => {
 const playSong = (song) => {
   playerStore.playSong(song)
   ElMessage.info('播放: ' + song.title)
+}
+
+const extractMetadata = async (song) => {
+  try {
+    ElMessage.info('正在提取元数据...')
+    const res = await songAPI.extractMetadata(song.id)
+    if (res.code === 200) {
+      ElMessage.success('元数据提取成功')
+      loadSongs()
+    } else {
+      ElMessage.error(res.message || '提取失败')
+    }
+  } catch (error) {
+    console.error('提取元数据失败:', error)
+    ElMessage.error('提取失败')
+  }
 }
 
 onMounted(() => {

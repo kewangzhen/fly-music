@@ -4,6 +4,7 @@ import com.example.flymusic.entity.Category;
 import com.example.flymusic.entity.Song;
 import com.example.flymusic.repository.CategoryRepository;
 import com.example.flymusic.repository.SongRepository;
+import com.example.flymusic.service.Mp3MetadataService;
 import com.example.flymusic.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,9 @@ public class SongServiceImpl implements SongService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private Mp3MetadataService mp3MetadataService;
 
     /**
      * 获取所有歌曲
@@ -249,5 +253,61 @@ public class SongServiceImpl implements SongService {
     @Override
     public long countSongs(Integer status) {
         return songRepository.countByStatus(status);
+    }
+
+    /**
+     * 从MP3文件提取并更新歌曲元数据
+     */
+    @Override
+    public Song extractAndUpdateMetadata(Long songId) {
+        Optional<Song> songOpt = songRepository.findById(songId);
+        if (!songOpt.isPresent()) {
+            return null;
+        }
+        
+        Song song = songOpt.get();
+        String url = song.getUrl();
+        
+        if (url == null || url.isEmpty()) {
+            return song;
+        }
+
+        String filename = url;
+        if (filename.startsWith("/api/songs/file/")) {
+            filename = filename.substring("/api/songs/file/".length());
+        }
+        
+        Mp3MetadataService.Mp3Metadata metadata = mp3MetadataService.extractMetadata(filename);
+        
+        if (metadata != null) {
+            boolean updated = false;
+            
+            if (metadata.getTitle() != null && !metadata.getTitle().isEmpty()) {
+                song.setTitle(metadata.getTitle());
+                updated = true;
+            }
+            
+            if (metadata.getDuration() != null && metadata.getDuration() > 0) {
+                song.setDuration(metadata.getDuration());
+                updated = true;
+            }
+            
+            if (metadata.getCoverUrl() != null && !metadata.getCoverUrl().isEmpty()) {
+                song.setCover(metadata.getCoverUrl());
+                updated = true;
+            }
+            
+            if (metadata.getLyrics() != null && !metadata.getLyrics().isEmpty()) {
+                song.setLyrics(metadata.getLyrics());
+                updated = true;
+            }
+            
+            if (updated) {
+                song.setUpdatedAt(new Date());
+                return songRepository.save(song);
+            }
+        }
+        
+        return song;
     }
 }
