@@ -80,7 +80,7 @@
               {{ formatDate(scope.row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="140" fixed="right">
+          <el-table-column label="操作" width="180" fixed="right">
             <template #default="scope">
               <div class="action-buttons">
                 <el-tooltip content="播放" placement="top">
