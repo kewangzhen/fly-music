@@ -6,6 +6,11 @@ export default {
     return apiClient.get('/albums')
   },
 
+  // 获取最新专辑
+  getLatestAlbums(limit) {
+    return apiClient.get('/albums/latest', { params: { limit } })
+  },
+
   // 根据ID获取专辑
   getAlbumById(id) {
     return apiClient.get(`/albums/${id}`)

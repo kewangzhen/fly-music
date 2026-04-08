@@ -20,6 +20,10 @@ export default defineConfig({
       '/api/artists': {
         target: 'http://localhost:8080',
         changeOrigin: true
+      },
+      '/api/albums': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
       }
     }
   }

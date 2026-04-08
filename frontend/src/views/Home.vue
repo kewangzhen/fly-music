@@ -397,9 +397,9 @@ const loadData = async () => {
   }
   
   try {
-    const albumsRes = await albumAPI.getAllAlbums()
+    const albumsRes = await albumAPI.getLatestAlbums(4)
     if (albumsRes.data) {
-      latestAlbums.value = albumsRes.data.slice(0, 4).map(a => ({
+      latestAlbums.value = albumsRes.data.map(a => ({
         ...a,
         cover: a.cover || defaultCover
       }))

@@ -33,6 +33,12 @@ public class AlbumController {
         List<Album> albums = albumRepository.findAll();
         return ResponseEntity.ok(createSuccessResponse("获取成功", albums));
     }
+    
+    @GetMapping("/latest")
+    public ResponseEntity<Map<String, Object>> getLatestAlbums(@RequestParam(defaultValue = "10") int limit) {
+        List<Album> albums = albumRepository.findLatestAlbums(org.springframework.data.domain.PageRequest.of(0, limit));
+        return ResponseEntity.ok(createSuccessResponse("获取成功", albums));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getAlbumById(@PathVariable Long id) {
