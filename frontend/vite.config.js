@@ -16,6 +16,10 @@ export default defineConfig({
       '/api/covers': {
         target: 'http://localhost:8080',
         changeOrigin: true
+      },
+      '/api/artists': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
       }
     }
   }
