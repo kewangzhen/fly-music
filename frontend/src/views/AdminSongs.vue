@@ -338,8 +338,15 @@ const uploadSong = async () => {
 }
 
 const editSong = (song) => {
+  const artistNames = song.artists && song.artists.length > 0 
+    ? song.artists.map(a => a.name).join(', ') 
+    : ''
+  const albumName = song.album ? song.album.name : ''
+  
   editForm.value = { 
     ...song,
+    artistName: artistNames,
+    albumName: albumName,
     categoryId: song.categoryId || (song.category ? song.category.id : null)
   }
   editDialogVisible.value = true
