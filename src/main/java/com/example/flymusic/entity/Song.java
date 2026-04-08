@@ -33,12 +33,10 @@ public class Song {
     @Column(name = "cover", length = 255)
     private String cover;
     
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "album_id")
     private Album album;
     
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
