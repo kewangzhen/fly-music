@@ -51,7 +51,7 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     /**
      * 根据歌手ID查询歌曲
      */
-    @Query("SELECT s FROM Song s JOIN s.artists a WHERE a.id = :artistId")
+    @Query("SELECT DISTINCT s FROM Song s LEFT JOIN FETCH s.artists a LEFT JOIN FETCH s.category LEFT JOIN FETCH s.album WHERE a.id = :artistId")
     List<Song> findByArtistId(@Param("artistId") Long artistId);
     
     /**
