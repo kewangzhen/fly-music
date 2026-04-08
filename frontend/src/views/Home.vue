@@ -138,7 +138,7 @@
         <el-row :gutter="24">
           <el-col :span="4" v-for="(artist, index) in hotArtists" :key="artist.id" class="artist-card" :style="{ animationDelay: `${index * 0.05}s` }">
             <el-card shadow="hover" @click="viewArtist(artist)">
-              <el-avatar :size="80" :src="artist.avatar" class="artist-avatar">
+              <el-avatar :size="80" :src="artist.avatar || defaultAvatar" class="artist-avatar">
                 {{ artist.name?.charAt(0) }}
               </el-avatar>
               <div class="artist-name">{{ artist.name }}</div>
@@ -292,14 +292,19 @@ const banners = ref([
 const hotSongs = ref([])
 const heartPlaylists = ref([])
 const latestAlbums = ref([])
-const hotArtists = ref([
-  { id: 1, name: '周杰伦', avatar: DEFAULT_IMAGES.avatar },
-  { id: 2, name: '林俊杰', avatar: DEFAULT_IMAGES.avatar },
-  { id: 3, name: '邓紫棋', avatar: DEFAULT_IMAGES.avatar },
-  { id: 4, name: '陈奕迅', avatar: DEFAULT_IMAGES.avatar },
-  { id: 5, name: '五月天', avatar: DEFAULT_IMAGES.avatar },
-  { id: 6, name: '薛之谦', avatar: DEFAULT_IMAGES.avatar }
-])
+const hotArtists = ref([])
+
+const loadHotArtists = async () => {
+  try {
+    const res = await artistAPI.getAllArtists()
+    if (res.data.code === 200) {
+      const artists = res.data.data || []
+      hotArtists.value = artists.slice(0, 6)
+    }
+  } catch (error) {
+    console.error('加载热门歌手失败:', error)
+  }
+}
 
 const getArtistNames = (song) => {
   if (song.artists && song.artists.length > 0) {
@@ -348,7 +353,7 @@ const viewAlbum = (album) => {
 }
 
 const viewArtist = (artist) => {
-  console.log('查看歌手:', artist)
+  router.push(`/artist/${artist.id}`)
 }
 
 const togglePlay = () => {
@@ -376,6 +381,8 @@ const loadData = async () => {
         cover: s.cover || defaultCover
       }))
     }
+    
+    await loadHotArtists()
   } catch (error) {
     console.warn('热门歌曲加载失败，使用默认数据')
   }
