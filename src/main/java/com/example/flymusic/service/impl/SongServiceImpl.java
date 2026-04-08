@@ -1,6 +1,8 @@
 package com.example.flymusic.service.impl;
 
+import com.example.flymusic.entity.Category;
 import com.example.flymusic.entity.Song;
+import com.example.flymusic.repository.CategoryRepository;
 import com.example.flymusic.repository.SongRepository;
 import com.example.flymusic.service.SongService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,9 @@ public class SongServiceImpl implements SongService {
 
     @Autowired
     private SongRepository songRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     /**
      * 获取所有歌曲
@@ -87,6 +92,12 @@ public class SongServiceImpl implements SongService {
         if (song.getCategory() != null) {
             existingSong.setCategory(song.getCategory());
         }
+        
+        if (song.getCategoryId() != null) {
+            Category category = categoryRepository.findById(song.getCategoryId()).orElse(null);
+            existingSong.setCategory(category);
+        }
+        
         if (song.getArtists() != null) {
             existingSong.setArtists(song.getArtists());
         }

@@ -177,6 +177,22 @@
           <el-form-item label="歌曲名">
             <el-input v-model="editForm.title" />
           </el-form-item>
+          <el-form-item label="歌手">
+            <el-input v-model="editForm.artistName" placeholder="请输入歌手名" />
+          </el-form-item>
+          <el-form-item label="专辑">
+            <el-input v-model="editForm.albumName" placeholder="请输入专辑名" />
+          </el-form-item>
+          <el-form-item label="分类">
+            <el-select v-model="editForm.categoryId" placeholder="选择分类" clearable>
+              <el-option 
+                v-for="cat in categories" 
+                :key="cat.id" 
+                :label="cat.name" 
+                :value="cat.id" 
+              />
+            </el-select>
+          </el-form-item>
           <el-form-item label="歌曲URL">
             <el-input v-model="editForm.url" />
           </el-form-item>
@@ -322,7 +338,10 @@ const uploadSong = async () => {
 }
 
 const editSong = (song) => {
-  editForm.value = { ...song }
+  editForm.value = { 
+    ...song,
+    categoryId: song.categoryId || (song.category ? song.category.id : null)
+  }
   editDialogVisible.value = true
 }
 

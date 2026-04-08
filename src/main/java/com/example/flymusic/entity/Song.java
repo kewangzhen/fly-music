@@ -43,6 +43,9 @@ public class Song {
     @JoinColumn(name = "category_id")
     private Category category;
     
+    @Column(name = "category_id", insertable = false, updatable = false)
+    private Long categoryId;
+    
     @ManyToMany
     @JoinTable(
         name = "song_artists",
