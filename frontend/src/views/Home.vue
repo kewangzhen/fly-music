@@ -297,8 +297,8 @@ const hotArtists = ref([])
 const loadHotArtists = async () => {
   try {
     const res = await artistAPI.getAllArtists()
-    if (res.data.code === 200) {
-      const artists = res.data.data || []
+    if (res.code === 200) {
+      const artists = res.data || []
       hotArtists.value = artists.slice(0, 6)
     }
   } catch (error) {
