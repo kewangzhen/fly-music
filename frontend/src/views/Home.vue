@@ -349,7 +349,7 @@ const viewPlaylist = (playlist) => {
 }
 
 const viewAlbum = (album) => {
-  console.log('查看专辑:', album)
+  router.push(`/album/${album.id}`)
 }
 
 const viewArtist = (artist) => {

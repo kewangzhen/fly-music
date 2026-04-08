@@ -68,6 +68,7 @@
             class="album-card" 
             v-for="album in albums" 
             :key="album.id"
+            @click="viewAlbum(album)"
           >
             <img :src="album.cover || defaultCover" class="album-cover" />
             <div class="album-info">
@@ -236,6 +237,10 @@ const formatDuration = (seconds) => {
 
 const goBack = () => {
   router.back()
+}
+
+const viewAlbum = (album) => {
+  router.push(`/album/${album.id}`)
 }
 
 const checkFollowStatus = async () => {
