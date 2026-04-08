@@ -11,10 +11,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 分类服务实现类
- * 实现分类的增删改查、歌曲管理等功能
- */
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
@@ -24,61 +20,83 @@ public class CategoryServiceImpl implements CategoryService {
     @Autowired
     private SongRepository songRepository;
 
-    /**
-     * 获取所有分类
-     * @return 分类列表
-     */
     @Override
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
 
-    /**
-     * 根据ID获取分类
-     * @param id 分类ID
-     * @return 分类对象
-     */
+    @Override
+    public List<Category> getActiveCategories() {
+        return categoryRepository.findByStatus(1);
+    }
+
     @Override
     public Optional<Category> getCategoryById(Long id) {
         return categoryRepository.findById(id);
     }
 
-    /**
-     * 保存分类
-     * @param category 分类对象
-     * @return 保存后的分类
-     */
     @Override
-    public Category saveCategory(Category category) {
+    public Category createCategory(Category category) {
+        if (category.getStatus() == null) {
+            category.setStatus(1);
+        }
+        if (category.getSortOrder() == null) {
+            category.setSortOrder(0);
+        }
+        if (category.getLevel() == null) {
+            category.setLevel(1);
+        }
         return categoryRepository.save(category);
     }
 
-    /**
-     * 删除分类
-     * @param id 分类ID
-     */
+    @Override
+    public Category updateCategory(Long id, Category category) {
+        Optional<Category> existing = categoryRepository.findById(id);
+        if (existing.isPresent()) {
+            Category c = existing.get();
+            if (category.getName() != null) {
+                c.setName(category.getName());
+            }
+            if (category.getIcon() != null) {
+                c.setIcon(category.getIcon());
+            }
+            if (category.getParentId() != null) {
+                c.setParentId(category.getParentId());
+            }
+            if (category.getLevel() != null) {
+                c.setLevel(category.getLevel());
+            }
+            if (category.getSortOrder() != null) {
+                c.setSortOrder(category.getSortOrder());
+            }
+            if (category.getStatus() != null) {
+                c.setStatus(category.getStatus());
+            }
+            return categoryRepository.save(c);
+        }
+        return null;
+    }
+
     @Override
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);
     }
 
-    /**
-     * 搜索分类
-     * @param name 搜索关键词
-     * @return 分类列表
-     */
     @Override
-    public List<Category> searchCategories(String name) {
-        return categoryRepository.findByNameContaining(name);
+    public List<Category> searchCategories(String keyword) {
+        return categoryRepository.findByNameContaining(keyword);
     }
 
-    /**
-     * 获取分类下的歌曲
-     * @param categoryId 分类ID
-     * @return 歌曲列表
-     */
     @Override
-    public List<Song> getCategorySongs(Long categoryId) {
-        return songRepository.findByCategoryId(categoryId);
+    public List<Category> getCategorySongs(Long categoryId) {
+        return null;
+    }
+
+    @Override
+    public void addSongToCategory(Long categoryId, Long songId) {
+    }
+
+    @Override
+    public void removeSongFromCategory(Long categoryId, Long songId) {
     }
 }

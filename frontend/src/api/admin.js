@@ -59,5 +59,30 @@ export default {
   // 重新计算推荐
   recalculateRecommendation() {
     return apiClient.post('/admin/recommendation/recalculate')
+  },
+
+  // 获取所有分类
+  getCategories() {
+    return apiClient.get('/admin/categories')
+  },
+
+  // 获取单个分类
+  getCategory(id) {
+    return apiClient.get(`/admin/categories/${id}`)
+  },
+
+  // 创建分类
+  createCategory(category) {
+    return apiClient.post('/admin/categories', category)
+  },
+
+  // 更新分类
+  updateCategory(id, category) {
+    return apiClient.put(`/admin/categories/${id}`, category)
+  },
+
+  // 删除分类
+  deleteCategory(id) {
+    return apiClient.delete(`/admin/categories/${id}`)
   }
 }

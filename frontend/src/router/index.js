@@ -116,6 +116,11 @@ const routes = [
     component: () => import('../views/AdminSongs.vue')
   },
   {
+    path: '/admin/categories',
+    name: 'AdminCategories',
+    component: () => import('../views/AdminCategories.vue')
+  },
+  {
     path: '/admin/config',
     name: 'AdminConfig',
     component: () => import('../views/AdminConfig.vue')
