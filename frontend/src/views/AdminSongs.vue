@@ -358,66 +358,120 @@ onMounted(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--dark-bg);
-}
-
-.navbar {
-  background-color: var(--card-bg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-}
-
-.logo {
-  font-size: 20px;
-  font-weight: bold;
-  color: #667eea;
-  cursor: pointer;
-}
-
-.nav-menu {
-  flex: 1;
-  margin: 0 20px;
-  border: none;
-}
-
-.user-menu {
-  display: flex;
-  align-items: center;
-}
-
-.user-avatar {
-  cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 20px;
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
 }
 
 .main-content {
   flex: 1;
-  padding: 20px;
+  padding: 30px;
 }
 
 .toolbar-card {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.toolbar-card :deep(.el-card__body) {
+  padding: 20px;
+}
+
+.toolbar-card :deep(.el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toolbar-card :deep(.el-input__inner) {
+  color: #fff;
+}
+
+.toolbar-card :deep(.el-input__inner::placeholder) {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.toolbar-card :deep(.el-select .el-input__wrapper) {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toolbar-card :deep(.el-select .el-input__inner) {
+  color: #fff;
+}
+
+.toolbar-card :deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
 }
 
 .table-card {
-  margin-bottom: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.table-card :deep(.el-table) {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: rgba(102, 126, 234, 0.2);
+  --el-table-row-hover-bg-color: rgba(102, 126, 234, 0.15);
+  --el-table-border-color: rgba(255, 255, 255, 0.1);
+  --el-table-text-color: rgba(255, 255, 255, 0.9);
+  --el-table-header-text-color: #fff;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.table-card :deep(.el-table__header) {
+  font-weight: 600;
+}
+
+.table-card :deep(.el-table__row) {
+  transition: all 0.3s ease;
+}
+
+.table-card :deep(.el-table__row:hover) {
+  transform: scale(1.01);
+}
+
+.table-card :deep(.el-tag) {
+  border: none;
+  font-weight: 500;
+}
+
+.table-card :deep(.el-button) {
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.table-card :deep(.el-button:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.pagination-container {
+  margin-top: 25px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 0;
 }
 
 .song-cover-mini {
   width: 50px;
   height: 50px;
   object-fit: cover;
-  border-radius: 5px;
+  border-radius: 8px;
 }
 
-.pagination-container {
-  margin-top: 20px;
+.action-buttons {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
 }
 </style>
