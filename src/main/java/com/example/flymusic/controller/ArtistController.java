@@ -2,8 +2,10 @@ package com.example.flymusic.controller;
 
 import com.example.flymusic.entity.Artist;
 import com.example.flymusic.entity.Song;
+import com.example.flymusic.entity.Album;
 import com.example.flymusic.repository.ArtistRepository;
 import com.example.flymusic.repository.SongRepository;
+import com.example.flymusic.repository.AlbumRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +29,9 @@ public class ArtistController {
     
     @Autowired
     private SongRepository songRepository;
+    
+    @Autowired
+    private AlbumRepository albumRepository;
 
     /**
      * 获取所有艺术家
@@ -96,6 +101,15 @@ public class ArtistController {
     public ResponseEntity<Map<String, Object>> getArtistSongs(@PathVariable Long artistId) {
         List<Song> songs = songRepository.findByArtistId(artistId);
         return ResponseEntity.ok(createSuccessResponse("获取成功", songs));
+    }
+    
+    /**
+     * 获取艺术家的专辑
+     */
+    @GetMapping("/{artistId}/albums")
+    public ResponseEntity<Map<String, Object>> getArtistAlbums(@PathVariable Long artistId) {
+        List<Album> albums = albumRepository.findByArtistId(artistId);
+        return ResponseEntity.ok(createSuccessResponse("获取成功", albums));
     }
 
     /**
