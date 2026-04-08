@@ -3,9 +3,13 @@ package com.example.flymusic.controller;
 import com.example.flymusic.entity.SystemLog;
 import com.example.flymusic.entity.User;
 import com.example.flymusic.entity.Song;
+import com.example.flymusic.entity.Category;
 import com.example.flymusic.repository.SystemLogRepository;
 import com.example.flymusic.repository.UserRepository;
 import com.example.flymusic.repository.SongRepository;
+import com.example.flymusic.repository.PlayHistoryRepository;
+import com.example.flymusic.repository.CategoryRepository;
+import com.example.flymusic.repository.ArtistRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +32,15 @@ public class AdminController {
     
     @Autowired
     private SystemLogRepository systemLogRepository;
+    
+    @Autowired
+    private PlayHistoryRepository playHistoryRepository;
+    
+    @Autowired
+    private CategoryRepository categoryRepository;
+    
+    @Autowired
+    private ArtistRepository artistRepository;
 
     /**
      * 获取用户统计数据
@@ -79,10 +92,50 @@ public class AdminController {
     @GetMapping("/stats/listening")
     public ResponseEntity<Map<String, Object>> getListeningStats() {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("totalPlays", 0L);
-        stats.put("dailyPlays", new HashMap<>());
-        stats.put("topSongs", new ArrayList<>());
-        stats.put("topGenres", new ArrayList<>());
+        
+        Date now = new Date();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(now);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        Date todayStart = calendar.getTime();
+        
+        calendar.add(Calendar.DAY_OF_MONTH, -30);
+        Date thirtyDaysAgo = calendar.getTime();
+        
+        long totalPlays = playHistoryRepository.count();
+        long todayPlays = playHistoryRepository.countByPlayedAtBetween(todayStart, now);
+        Long todayDuration = playHistoryRepository.sumDurationByPlayedAtBetween(todayStart, now);
+        long todayActiveUsers = playHistoryRepository.countDistinctUsersByPlayedAtBetween(todayStart, now);
+        
+        stats.put("totalPlays", totalPlays);
+        stats.put("todayPlays", todayPlays);
+        stats.put("todayDuration", todayDuration != null ? todayDuration : 0);
+        stats.put("todayActiveUsers", todayActiveUsers);
+        
+        List<Object[]> topArtistData = playHistoryRepository.countByArtist(org.springframework.data.domain.PageRequest.of(0, 5));
+        List<Map<String, Object>> topArtists = new ArrayList<>();
+        for (Object[] row : topArtistData) {
+            Map<String, Object> artistMap = new HashMap<>();
+            artistMap.put("id", row[0]);
+            artistMap.put("name", row[1]);
+            artistMap.put("avatar", row[2]);
+            artistMap.put("playCount", row[3]);
+            topArtists.add(artistMap);
+        }
+        stats.put("topArtists", topArtists);
+        
+        List<Category> allCategories = categoryRepository.findAll();
+        Map<String, Long> genreStats = new LinkedHashMap<>();
+        for (Category cat : allCategories) {
+            long count = playHistoryRepository.countBySongCategoryId(cat.getId());
+            if (count > 0) {
+                genreStats.put(cat.getName(), count);
+            }
+        }
+        stats.put("genreStats", genreStats);
         
         return ResponseEntity.ok(createSuccessResponse("获取成功", stats));
     }
