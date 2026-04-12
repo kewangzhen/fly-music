@@ -63,7 +63,8 @@ public interface SongRepository extends JpaRepository<Song, Long> {
     /**
      * 查询热门歌曲
      */
-    List<Song> findTopByStatusOrderByPlayCountDesc(Integer status, Pageable pageable);
+    @Query("SELECT DISTINCT s FROM Song s LEFT JOIN FETCH s.artists a LEFT JOIN FETCH s.category LEFT JOIN FETCH s.album WHERE s.status = :status ORDER BY s.playCount DESC")
+    List<Song> findTopByStatusOrderByPlayCountDesc(@Param("status") Integer status, Pageable pageable);
     
     /**
      * 查询最新歌曲
