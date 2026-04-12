@@ -10,6 +10,7 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -226,26 +227,92 @@ public class AiMusicServiceImpl implements AiMusicService {
     }
 
     @Override
-    public Map<String, Object> recognizeMusicStyle(String audioUrl) {
+    public Map<String, Object> recognizeMusicStyle(MultipartFile file) {
         Map<String, Object> result = new HashMap<>();
-
-        String[] genres = {"流行", "摇滚", "电子", "古典", "爵士", "民谣", "说唱", "R&B"};
-        String[] moods = {"欢快", "悲伤", "平静", "激昂", "浪漫", "神秘"};
-        String[] instruments = {"吉他", "钢琴", "鼓", "贝斯", "小提琴", "萨克斯", "合成器"};
-
-        Random random = new Random();
-        result.put("genre", genres[random.nextInt(genres.length)]);
-        result.put("mood", moods[random.nextInt(moods.length)]);
-        result.put("bpm", 60 + random.nextInt(120));
-        result.put("instruments", Arrays.asList(
-            instruments[random.nextInt(instruments.length)],
-            instruments[random.nextInt(instruments.length)]
-        ));
-        result.put("key", getRandomKey(random));
-        result.put("timeSignature", "4/4");
-        result.put("energy", random.nextInt(100));
-
-        return result;
+        
+        try {
+            if (file != null && !file.isEmpty()) {
+                String tempDir = System.getProperty("java.io.tmpdir");
+                String tempFilePath = tempDir + "/temp_audio_" + System.currentTimeMillis() + ".wav";
+                java.io.File tempFile = new java.io.File(tempFilePath);
+                file.transferTo(tempFile);
+                
+                try {
+                    String pythonUrl = "http://localhost:5001/understand";
+                    
+                    java.net.URI uri = new java.net.URI(pythonUrl);
+                    java.net.HttpURLConnection connection = (java.net.HttpURLConnection) uri.toURL().openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setDoOutput(true);
+                    
+                    String boundary = "----WebKitFormBoundary" + System.currentTimeMillis();
+                    connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+                    
+                    java.io.OutputStream outputStream = connection.getOutputStream();
+                    java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.OutputStreamWriter(outputStream, "UTF-8"), true);
+                    
+                    writer.append("--" + boundary + "\r\n");
+                    writer.append("Content-Disposition: form-data; name=\"audio\"; filename=\"" + file.getOriginalFilename() + "\"\r\n");
+                    writer.append("Content-Type: audio/wav\r\n\r\n");
+                    writer.flush();
+                    
+                    java.io.FileInputStream inputStream = new java.io.FileInputStream(tempFile);
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(buffer)) != -1) {
+                        outputStream.write(buffer, 0, bytesRead);
+                    }
+                    inputStream.close();
+                    writer.append("\r\n");
+                    writer.append("--" + boundary + "--\r\n");
+                    writer.flush();
+                    outputStream.close();
+                    
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode == 200) {
+                        java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(connection.getInputStream(), "UTF-8"));
+                        StringBuilder response = new StringBuilder();
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+                        reader.close();
+                        
+                        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                        result = mapper.readValue(response.toString(), Map.class);
+                        return result;
+                    }
+                } catch (Exception e) {
+                    System.err.println("调用Python服务失败: " + e.getMessage());
+                } finally {
+                    tempFile.delete();
+                }
+            }
+            
+            String[] genres = {"流行", "摇滚", "电子", "古典", "爵士", "民谣", "说唱", "R&B"};
+            String[] moods = {"欢快", "悲伤", "平静", "激昂", "浪漫", "神秘"};
+            String[] instruments = {"吉他", "钢琴", "鼓", "贝斯", "小提琴", "萨克斯", "合成器"};
+            
+            Random random = new Random();
+            result.put("genre", genres[random.nextInt(genres.length)]);
+            result.put("mood", moods[random.nextInt(moods.length)]);
+            result.put("bpm", 60 + random.nextInt(120));
+            result.put("instruments", Arrays.asList(
+                instruments[random.nextInt(instruments.length)],
+                instruments[random.nextInt(instruments.length)]
+            ));
+            result.put("key", getRandomKey(random));
+            result.put("timeSignature", "4/4");
+            result.put("energy", random.nextInt(100));
+            result.put("model", "fallback");
+            
+            return result;
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            return result;
+        }
     }
 
     @Override

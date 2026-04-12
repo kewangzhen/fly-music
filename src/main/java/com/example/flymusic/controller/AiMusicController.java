@@ -128,12 +128,29 @@ public class AiMusicController {
                 return ResponseEntity.badRequest().body(createErrorResponse("文件必须是音频文件"));
             }
 
-            Map<String, Object> result = aiMusicService.recognizeMusicStyle(null);
+            Map<String, Object> result = aiMusicService.recognizeMusicStyle(file);
 
             return ResponseEntity.ok(createSuccessResponse("识别成功", result));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(createErrorResponse("识别失败: " + e.getMessage()));
         }
+    }
+
+    @GetMapping("/models")
+    public ResponseEntity<Map<String, Object>> getAvailableModels() {
+        Map<String, Object> models = new HashMap<>();
+        
+        models.put("generation", Arrays.asList(
+            Map.of("id", "acestep", "name", "ACE-Step 1.5", "description", "最强开源音乐生成，支持曲风识别"),
+            Map.of("id", "musicgen", "name", "MusicGen", "description", "Meta 开源音乐生成模型")
+        ));
+        
+        models.put("recognition", Arrays.asList(
+            Map.of("id", "acestep", "name", "ACE-Step", "description", "支持 BPM、调性、风格识别"),
+            Map.of("id", "simple", "name", "Simple", "description", "基础音频特征分析")
+        ));
+        
+        return ResponseEntity.ok(createSuccessResponse("获取成功", models));
     }
 
     @DeleteMapping("/{id}")

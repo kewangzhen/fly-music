@@ -1,6 +1,8 @@
 package com.example.flymusic.service;
 
 import com.example.flymusic.entity.AiMusicGeneration;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -12,7 +14,7 @@ public interface AiMusicService {
 
     List<AiMusicGeneration> getUserGenerations(Long userId);
 
-    Map<String, Object> recognizeMusicStyle(String audioUrl);
+    Map<String, Object> recognizeMusicStyle(MultipartFile file);
 
     void deleteGeneration(Long id);
 }
