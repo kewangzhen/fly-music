@@ -10,6 +10,8 @@ import java.util.concurrent.Future;
 public interface AiMusicService {
     Future<AiMusicGeneration> generateMusicAsync(Long userId, String prompt, String genre, String mood, Integer duration);
 
+    AiMusicGeneration createGenerationRecord(Long userId, String prompt, String genre, String mood, Integer duration);
+
     AiMusicGeneration getGenerationStatus(Long id);
 
     List<AiMusicGeneration> getUserGenerations(Long userId);

@@ -42,11 +42,18 @@ public class AiMusicController {
         }
 
         try {
-            Future<AiMusicGeneration> future = aiMusicService.generateMusicAsync(userId, prompt, genre, mood, duration);
+            AiMusicGeneration newGeneration = aiMusicService.createGenerationRecord(userId, prompt, genre, mood, duration);
+            
+            if (newGeneration == null) {
+                return ResponseEntity.badRequest().body(createErrorResponse("用户不存在"));
+            }
+            
+            aiMusicService.generateMusicAsync(userId, prompt, genre, mood, duration);
 
             Map<String, Object> result = new HashMap<>();
-            result.put("id", 0L);
-            result.put("status", "processing");
+            result.put("id", newGeneration.getId());
+            result.put("status", 0);
+            result.put("statusText", "生成中");
             result.put("message", "AI音乐生成任务已提交，请稍后查询结果");
 
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(createSuccessResponse("生成中", result));

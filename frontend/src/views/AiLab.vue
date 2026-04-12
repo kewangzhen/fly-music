@@ -299,7 +299,7 @@ const generateMusic = async () => {
   
   try {
     const userId = userStore.user?.id || 2
-    await aiApi.generateMusic(
+    const res = await aiApi.generateMusic(
       textToMusicForm.prompt,
       textToMusicForm.genre,
       textToMusicForm.mood,
@@ -307,13 +307,19 @@ const generateMusic = async () => {
       userId
     )
     
-    ElMessage.success('AI音乐生成任务已提交，请稍后查看结果')
+    const result = res.data.data
+    if (result.id) {
+      ElMessage.success('AI音乐生成任务已提交，正在生成中...')
+      
+      pollingTimer.value = setInterval(() => {
+        checkGenerationStatus(result.id)
+      }, 3000)
+    }
     
     await loadHistory()
     
   } catch (e) {
     ElMessage.error('生成失败: ' + (e.message || '未知错误'))
-  } finally {
     isGenerating.value = false
   }
 }

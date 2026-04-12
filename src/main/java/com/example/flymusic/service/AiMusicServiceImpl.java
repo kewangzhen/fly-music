@@ -63,13 +63,14 @@ public class AiMusicServiceImpl implements AiMusicService {
         generation.setStatus(0);
 
         generation = aiMusicRepository.save(generation);
+        final Long generationId = generation.getId();
 
         try {
             if (musicgenEnabled && "musicgen".equalsIgnoreCase(apiProvider)) {
                 generation = callMusicGenService(generation);
             } else {
                 Thread.sleep(5000);
-                String musicUrl = generateMockMusicUrl(generation.getId());
+                String musicUrl = generateMockMusicUrl(generationId);
                 String cover = generateMockCover(genre, mood);
                 generation.setMusicUrl(musicUrl);
                 generation.setCover(cover);
@@ -87,6 +88,23 @@ public class AiMusicServiceImpl implements AiMusicService {
 
         generation = aiMusicRepository.save(generation);
         return CompletableFuture.completedFuture(generation);
+    }
+
+    public AiMusicGeneration createGenerationRecord(Long userId, String prompt, String genre, String mood, Integer duration) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return null;
+        }
+
+        AiMusicGeneration generation = new AiMusicGeneration();
+        generation.setUser(userOpt.get());
+        generation.setPrompt(prompt);
+        generation.setGenre(genre);
+        generation.setMood(mood);
+        generation.setDuration(duration);
+        generation.setStatus(0);
+
+        return aiMusicRepository.save(generation);
     }
 
     private AiMusicGeneration callMusicGenService(AiMusicGeneration generation) throws Exception {
