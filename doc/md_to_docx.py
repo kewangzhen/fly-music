@@ -1,91 +1,140 @@
 #!/usr/bin/env python3
 """
 Markdown 转 DOCX 转换器
-直接使用 python-docx 生成 docx 文件
+完整保留标题、段落和表格
 """
 
 from docx import Document
-from docx.shared import Inches, Pt, Cm
+from docx.shared import Pt, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
 import os
 import re
 
-def read_md_content(md_file):
-    """读取markdown文件内容"""
-    with open(md_file, 'r', encoding='utf-8') as f:
-        return f.read()
+def is_table_line(line):
+    """判断是否是表格行"""
+    stripped = line.strip()
+    return stripped.startswith('|') and stripped.endswith('|')
 
-def parse_tables(md_content):
-    """解析markdown中的表格"""
-    tables = []
-    lines = md_content.split('\n')
-    current_table = []
-    in_table = False
+def is_table_separator(line):
+    """判断是否是表格分隔行"""
+    stripped = line.strip()
+    cells = [c.strip() for c in stripped.split('|')[1:-1]]
+    return len(cells) > 0 and all(c == '' or set(c.replace('-', '').replace(':', '')) <= {''} for c in cells)
+
+def parse_markdown_file(md_file):
+    """解析markdown文件内容"""
+    with open(md_file, 'r', encoding='utf-8') as f:
+        content = f.read()
     
-    for line in lines:
-        line = line.strip()
-        if line.startswith('|') and line.endswith('|'):
-            cells = [cell.strip() for cell in line.split('|')[1:-1]]
-            if not all(c == '' or c == '-' for c in cells):
-                current_table.append(cells)
+    sections = []
+    lines = content.split('\n')
+    
+    i = 0
+    current_section = None
+    current_content = []
+    
+    while i < len(lines):
+        line = lines[i]
+        
+        # 标题行
+        if line.startswith('#'):
+            # 保存之前的内容
+            if current_section:
+                sections.append((current_section, current_content))
+            
+            # 提取标题级别和文本
+            match = re.match(r'^(#+)\s+(.*)', line)
+            if match:
+                level = len(match.group(1))
+                text = match.group(2)
+                current_section = ('title', level, text)
+                current_content = []
+        
+        # 表格行
+        elif is_table_line(line):
+            table_lines = []
+            while i < len(lines) and is_table_line(lines[i]):
+                if not is_table_separator(lines[i]):
+                    table_lines.append(lines[i])
+                i += 1
+            # 保存表格
+            if table_lines:
+                sections.append(('table', table_lines))
+            continue
+        
         else:
-            if current_table:
-                tables.append(current_table)
-                current_table = []
+            if line.strip():
+                current_content.append(line)
+        
+        i += 1
     
-    if current_table:
-        tables.append(current_table)
+    # 保存最后的内容
+    if current_section:
+        sections.append((current_section, current_content))
     
-    return tables
+    return sections
 
 def create_docx(md_file, docx_file):
     """创建docx文件"""
     doc = Document()
     
-    # 设置文档标题
-    title = doc.add_heading('Fly Music 系统测试用例文档', 0)
-    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # 设置默认字体
+    style = doc.styles['Normal']
+    style.font.name = '宋体'
+    style.font.size = Pt(11)
     
-    doc.add_paragraph('各功能模块测试用例说明')
-    doc.add_paragraph('')
+    sections = parse_markdown_file(md_file)
     
-    content = read_md_content(md_file)
-    
-    # 解析并添加表格
-    tables = parse_tables(content)
-    
-    for table_data in tables:
-        if not table_data:
-            continue
-            
-        # 创建表格
-        rows = len(table_data)
-        cols = len(table_data[0]) if table_data else 0
+    for section in sections:
+        if section[0] == 'title':
+            level = section[1]
+            text = section[2]
+            if level == 1:
+                doc.add_heading(text, 0)
+            elif level == 2:
+                doc.add_heading(text, 1)
+            elif level == 3:
+                doc.add_heading(text, 2)
+            else:
+                doc.add_heading(text, 3)
         
-        if rows > 0 and cols > 0:
-            table = doc.add_table(rows=rows, cols=cols)
+        elif section[0] == 'paragraph':
+            for line in section[1]:
+                if line.strip():
+                    doc.add_paragraph(line.strip())
+        
+        elif section[0] == 'table':
+            table_lines = section[1]
+            if not table_lines:
+                continue
+            
+            # 解析表头
+            headers = [h.strip() for h in table_lines[0].split('|')[1:-1]]
+            
+            # 创建表格
+            table = doc.add_table(rows=len(table_lines), cols=len(headers))
             table.style = 'Table Grid'
             
-            for i, row_data in enumerate(table_data):
-                for j, cell_data in enumerate(row_data):
-                    cell = table.rows[i].cells[j]
-                    cell.text = cell_data
+            # 填充数据
+            for row_idx, row_line in enumerate(table_lines):
+                cells = [c.strip() for c in row_line.split('|')[1:-1]]
+                for col_idx, cell_text in enumerate(cells):
+                    cell = table.rows[row_idx].cells[col_idx]
+                    cell.text = cell_text
                     
-                    # 设置表头样式
-                    if i == 0:
-                        cell.paragraphs[0].runs[0].bold = True if cell.paragraphs[0].runs else False
-                        for run in cell.paragraphs[0].runs:
-                            run.bold = True
-                    
-                    # 设置字体大小
-                    for paragraph in cell.paragraphs:
-                        for run in paragraph.runs:
-                            run.font.size = Pt(10)
+                    # 表头加粗
+                    if row_idx == 0:
+                        for paragraph in cell.paragraphs:
+                            for run in paragraph.runs:
+                                run.bold = True
             
             doc.add_paragraph('')
+        
+        elif section[0] == 'content':
+            for line in section[1]:
+                if line.strip():
+                    doc.add_paragraph(line.strip())
     
-    # 保存文档
     doc.save(docx_file)
     print(f"转换成功: {docx_file}")
 
