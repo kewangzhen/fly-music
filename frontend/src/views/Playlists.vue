@@ -250,7 +250,7 @@ const playPlaylist = (playlist) => {
 }
 
 const goToPlaylistDetail = (playlist) => {
-  router.push(`/playlist/${playlist.id}`)
+  router.push(`/playlists/${playlist.id}`)
 }
 
 onMounted(async () => {
