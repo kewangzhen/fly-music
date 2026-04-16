@@ -54,3 +54,4 @@ covers/
 # Large files (> 10MB)
 dump-*.sql
 fly_music_data_*.sql
+doc/
