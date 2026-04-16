@@ -20,9 +20,9 @@ ACE-Step 1.5 是目前最强的开源音乐生成模型，支持：
 
 ### 1. 克隆项目
 
-```bash
-cd /path/to/fly-music
-git clone https://github.com/ACE-Step/ACE-Step-1.5.git ace_step_service/ace_step
+```powershell
+cd C:\path\to\fly-music
+git clone https://github.com/ACE-Step/ACE-Step-1.5.git ace_step_service\ace_step
 ```
 
 ### 2. 安装依赖
@@ -122,7 +122,7 @@ huggingface-cli download ACE-Step/ace-step-1.5-base
 
 使用量化模式：
 
-```bash
+```powershell
 uv run acestep-api --use-quantization
 ```
 
@@ -130,7 +130,7 @@ uv run acestep-api --use-quantization
 
 修改端口：
 
-```bash
+```powershell
 uv run acestep-api --port 8002
 ```
 
