@@ -27,11 +27,12 @@ git clone https://github.com/ACE-Step/ACE-Step-1.5.git ace_step_service/ace_step
 
 ### 2. 安装依赖
 
-```bash
-cd ace_step_service/ace_step
+```powershell
+# 进入目录
+cd ace_step_service\ace_step
 
-# 安装 uv (如果未安装)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# 安装 uv (Windows PowerShell)
+irm https://astral.sh/uv/install.ps1 | iex
 
 # 同步依赖
 uv sync
@@ -39,7 +40,7 @@ uv sync
 
 ### 3. 启动服务
 
-```bash
+```powershell
 # 启动 REST API (端口 8001)
 uv run acestep-api
 
