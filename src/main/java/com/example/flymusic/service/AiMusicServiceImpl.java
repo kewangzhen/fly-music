@@ -49,6 +49,12 @@ public class AiMusicServiceImpl implements AiMusicService {
     @Autowired
     private UdioApiService udioApiService;
 
+    @Value("${ai.mureka.enabled:false}")
+    private boolean murekaEnabled;
+
+    @Autowired
+    private MurekaApiService murekaApiService;
+
     @Override
     @Async
     public Future<AiMusicGeneration> generateMusicAsync(Long userId, String prompt, String genre, String mood, Integer duration) {
@@ -72,7 +78,9 @@ public class AiMusicServiceImpl implements AiMusicService {
         final Long generationId = generation.getId();
 
         try {
-            if (udioEnabled) {
+            if (murekaEnabled) {
+                generation = callMurekaApiService(generation);
+            } else if (udioEnabled) {
                 generation = callUdioApiService(generation);
             } else if (musicgenEnabled && "musicgen".equalsIgnoreCase(apiProvider)) {
                 generation = callMusicGenService(generation);
@@ -196,6 +204,89 @@ public class AiMusicServiceImpl implements AiMusicService {
         }
 
         generation.setErrorMessage("等待UDIO生成结果超时");
+        generation.setStatus(2);
+        return false;
+    }
+
+    private AiMusicGeneration callMurekaApiService(AiMusicGeneration generation) throws Exception {
+        if (!murekaApiService.isConfigured()) {
+            generation.setStatus(2);
+            generation.setErrorMessage("Mureka API 未配置");
+            return generation;
+        }
+
+        try {
+            Map<String, Object> result = murekaApiService.generateMusic(
+                    generation.getPrompt(),
+                    generation.getDuration(),
+                    "mureka-v6"
+            );
+
+            if (Boolean.TRUE.equals(result.get("success"))) {
+                String taskId = (String) result.get("task_id");
+                generation.setStatus(0);
+                aiMusicRepository.save(generation);
+
+                boolean completed = waitForMurekaGenerationComplete(taskId, generation);
+
+                if (completed && generation.getStatus() == 1) {
+                    return generation;
+                }
+            } else {
+                String error = (String) result.get("error");
+                generation.setStatus(2);
+                generation.setErrorMessage(error != null ? error : "Mureka API 调用失败");
+            }
+        } catch (Exception e) {
+            generation.setStatus(2);
+            generation.setErrorMessage("Mureka API 调用失败: " + e.getMessage());
+        }
+
+        return generation;
+    }
+
+    private boolean waitForMurekaGenerationComplete(String taskId, AiMusicGeneration generation) throws Exception {
+        int maxAttempts = 120;
+        int attempt = 0;
+
+        while (attempt < maxAttempts) {
+            try {
+                Thread.sleep(5000);
+                attempt++;
+
+                Map<String, Object> statusResult = murekaApiService.getGenerationStatus(taskId);
+
+                if (Boolean.TRUE.equals(statusResult.get("success"))) {
+                    String status = (String) statusResult.get("status");
+
+                    if ("completed".equals(status) || "success".equals(status)) {
+                        Object audioUrlObj = statusResult.get("audio_url");
+                        if (audioUrlObj != null) {
+                            String audioUrl = audioUrlObj.toString();
+                            String localUrl = murekaApiService.downloadAudio(audioUrl, generation.getId());
+                            generation.setMusicUrl(localUrl);
+                        }
+
+                        Object coverObj = statusResult.get("image_url");
+                        if (coverObj != null) {
+                            generation.setCover(coverObj.toString());
+                        }
+
+                        generation.setStatus(1);
+                        return true;
+                    } else if ("failed".equals(status) || "error".equals(status)) {
+                        String error = statusResult.get("error") != null ? statusResult.get("error").toString() : "生成失败";
+                        generation.setStatus(2);
+                        generation.setErrorMessage(error);
+                        return false;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("查询Mureka状态失败: " + e.getMessage());
+            }
+        }
+
+        generation.setErrorMessage("等待Mureka生成结果超时");
         generation.setStatus(2);
         return false;
     }
