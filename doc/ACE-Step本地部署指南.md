@@ -120,10 +120,16 @@ huggingface-cli download ACE-Step/ace-step-1.5-base
 
 ### 显存不足
 
-使用量化模式：
+使用量化模式（禁用语言模型，减少显存占用）：
 
 ```powershell
-uv run acestep-api --use-quantization
+uv run acestep-api --init-llm=false
+```
+
+或直接启动（默认）：
+
+```powershell
+uv run acestep-api
 ```
 
 ### 端口被占用
