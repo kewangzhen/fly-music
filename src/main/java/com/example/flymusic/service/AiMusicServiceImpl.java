@@ -43,6 +43,12 @@ public class AiMusicServiceImpl implements AiMusicService {
     @Value("${ai.musicgen.service.url:http://localhost:5000}")
     private String musicgenServiceUrl;
 
+    @Value("${ai.udio.enabled:false}")
+    private boolean udioEnabled;
+
+    @Autowired
+    private UdioApiService udioApiService;
+
     @Override
     @Async
     public Future<AiMusicGeneration> generateMusicAsync(Long userId, String prompt, String genre, String mood, Integer duration) {
@@ -66,7 +72,9 @@ public class AiMusicServiceImpl implements AiMusicService {
         final Long generationId = generation.getId();
 
         try {
-            if (musicgenEnabled && "musicgen".equalsIgnoreCase(apiProvider)) {
+            if (udioEnabled) {
+                generation = callUdioApiService(generation);
+            } else if (musicgenEnabled && "musicgen".equalsIgnoreCase(apiProvider)) {
                 generation = callMusicGenService(generation);
             } else {
                 Thread.sleep(5000);
@@ -105,6 +113,91 @@ public class AiMusicServiceImpl implements AiMusicService {
         generation.setStatus(0);
 
         return aiMusicRepository.save(generation);
+    }
+
+    private AiMusicGeneration callUdioApiService(AiMusicGeneration generation) throws Exception {
+        if (!udioApiService.isConfigured()) {
+            generation.setStatus(2);
+            generation.setErrorMessage("UDIO API 未配置");
+            return generation;
+        }
+
+        try {
+            Map<String, Object> result = udioApiService.generateMusic(
+                    generation.getPrompt(),
+                    generation.getDuration()
+            );
+
+            if (Boolean.TRUE.equals(result.get("success"))) {
+                Map<String, Object> data = (Map<String, Object>) result.get("data");
+                
+                String taskId = (String) data.get("id");
+                generation.setStatus(0);
+                aiMusicRepository.save(generation);
+
+                boolean completed = waitForUdioGenerationComplete(taskId, generation);
+
+                if (completed && generation.getStatus() == 1) {
+                    return generation;
+                }
+            } else {
+                String error = (String) result.get("error");
+                generation.setStatus(2);
+                generation.setErrorMessage(error != null ? error : "UDIO API 调用失败");
+            }
+        } catch (Exception e) {
+            generation.setStatus(2);
+            generation.setErrorMessage("UDIO API 调用失败: " + e.getMessage());
+        }
+
+        return generation;
+    }
+
+    private boolean waitForUdioGenerationComplete(String taskId, AiMusicGeneration generation) throws Exception {
+        int maxAttempts = 120;
+        int attempt = 0;
+
+        while (attempt < maxAttempts) {
+            try {
+                Thread.sleep(5000);
+                attempt++;
+
+                Map<String, Object> statusResult = udioApiService.getGenerationStatus(taskId);
+
+                if (Boolean.TRUE.equals(statusResult.get("success"))) {
+                    Map<String, Object> data = (Map<String, Object>) statusResult.get("data");
+                    String status = (String) data.get("status");
+
+                    if ("completed".equals(status) || "success".equals(status)) {
+                        Object audioUrlObj = data.get("audio_url");
+                        if (audioUrlObj != null) {
+                            String audioUrl = audioUrlObj.toString();
+                            String localUrl = udioApiService.downloadAudio(audioUrl, generation.getId());
+                            generation.setMusicUrl(localUrl);
+                        }
+                        
+                        Object coverUrlObj = data.get("image_url");
+                        if (coverUrlObj != null) {
+                            generation.setCover(coverUrlObj.toString());
+                        }
+                        
+                        generation.setStatus(1);
+                        return true;
+                    } else if ("failed".equals(status) || "error".equals(status)) {
+                        String error = data.get("error") != null ? data.get("error").toString() : "生成失败";
+                        generation.setStatus(2);
+                        generation.setErrorMessage(error);
+                        return false;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("查询UDIO状态失败: " + e.getMessage());
+            }
+        }
+
+        generation.setErrorMessage("等待UDIO生成结果超时");
+        generation.setStatus(2);
+        return false;
     }
 
     private AiMusicGeneration callMusicGenService(AiMusicGeneration generation) throws Exception {
