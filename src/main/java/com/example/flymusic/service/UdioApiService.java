@@ -20,7 +20,7 @@ public class UdioApiService {
     @Value("${ai.udio.api.key:}")
     private String apiKey;
 
-    @Value("${ai.udio.api.url:https://api.origin.novatools.cn}")
+    @Value("${ai.udio.api.url:https://api.udioapi.pro}")
     private String apiBaseUrl;
 
     @Value("${song.storage.path:./songs}")
